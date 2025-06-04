@@ -1,0 +1,117 @@
+/* 全局样式 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 核心样式变量 */
+:root {
+  --app-border-radius: 8px;
+  --app-transition: all 0.2s ease;
+  --app-scrollbar-size: 6px;
+  --app-scrollbar-radius: 3px;
+}
+
+/* 基础重置 */
+* {
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+}
+
+/* 统一滚动条样式 */
+::-webkit-scrollbar {
+  width: var(--app-scrollbar-size);
+  height: var(--app-scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--v-theme-on-surface), 0.2);
+  border-radius: var(--app-scrollbar-radius);
+  transition: var(--app-transition);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--v-theme-on-surface), 0.3);
+}
+
+/* 统一组件样式类 */
+.app-transition {
+  transition: var(--app-transition);
+}
+
+.app-rounded {
+  border-radius: var(--app-border-radius);
+}
+
+.app-card {
+  border-radius: var(--app-border-radius);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  background: rgb(var(--v-theme-surface));
+  transition: var(--app-transition);
+}
+
+.app-card:hover {
+  transform: translateY(-1px);
+}
+
+.app-glass {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(var(--v-theme-surface), 0.8);
+}
+
+/* Vuetify组件统一样式覆盖 */
+.v-card,
+.v-btn,
+.v-text-field .v-field,
+.v-select .v-field,
+.v-textarea .v-field,
+.v-list-item {
+  border-radius: var(--app-border-radius) !important;
+}
+
+.v-btn {
+  text-transform: none !important;
+  transition: var(--app-transition) !important;
+}
+
+.v-list-item {
+  transition: var(--app-transition) !important;
+}
+
+/* 页面切换动画 */
+.page-enter-active, 
+.page-leave-active {
+  transition: var(--app-transition);
+}
+
+.page-enter-from, 
+.page-leave-to {
+  opacity: 0;
+}
+
+/* 统一Tooltip样式 */
+.v-tooltip .v-overlay__content {
+  background: rgba(0, 0, 0, 0.85) !important;
+  color: white !important;
+  font-size: 13px !important;
+  border-radius: var(--app-border-radius) !important;
+  padding: 6px 12px !important;
+  max-width: 300px !important;
+  word-wrap: break-word !important;
+}
+
+/* 深色主题tooltip保持相同样式 */
+.v-theme--dark .v-tooltip .v-overlay__content {
+  background: rgba(0, 0, 0, 0.9) !important;
+}

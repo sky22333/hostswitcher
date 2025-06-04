@@ -1,0 +1,46 @@
+# Go 构建产物
+*.exe
+*.out
+*.test
+*.log
+*.tmp
+*.temp
+
+# Wails 构建输出
+build
+frontend/src/wailsjs/
+
+# Node 依赖和构建产物
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.output/
+frontend/.DS_Store
+frontend/.eslintcache
+frontend/coverage/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/package.json.md5
+# IDE/编辑器配置
+.vscode/
+.idea/
+
+# OS 垃圾文件
+.DS_Store
+Thumbs.db
+
+# Go cache 和测试文件
+**/__debug_bin
+**/.cache
+**/.testfiles
+**/*.prof
+**/testdata/
+vendor/
+
+# Windows 特定
+*.dll
+
+# macOS/Linux 特定
+*.app
+*.dmg

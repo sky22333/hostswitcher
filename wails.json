@@ -1,0 +1,31 @@
+{
+  "name": "HostSwitcher",
+  "outputfilename": "HostSwitcher",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "host 管理工具",
+    "email": "example@example.com"
+  },
+  "info": {
+    "companyName": "host 管理工具",
+    "productName": "host 管理工具",
+    "productVersion": "0.1.0",
+    "copyright": "Copyright © 2025",
+    "comments": "快速切换和管理 hosts 文件的现代化 Windows 桌面应用",
+    "icon": "appicon.ico"
+  },
+  "wailsjsdir": "./frontend/src",
+  "version": "2",
+  "debounceMS": 100,
+  "devServer": "localhost:34115",
+  "appargs": "",
+  "nsisType": "multiple",
+  "obfuscated": false,
+  "build:dir": "build",
+  "frontend:dir": "frontend",
+  "assetdir": ".",
+  "windowStartState": "normal"
+}
