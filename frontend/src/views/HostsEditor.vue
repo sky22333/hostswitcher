@@ -89,7 +89,7 @@
                         <v-icon>mdi-content-save-settings</v-icon>
                       </v-btn>
                     </template>
-                    <span>保存为ANSI编码</span>
+                    <span>保存为ANSI编码，仅在默认的保存不生效的情况下使用。</span>
                   </v-tooltip>
                   
                   <v-btn
