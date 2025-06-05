@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -668,83 +668,54 @@ func (s *ConfigService) WriteSystemHostsWithANSI(content string) error {
 }
 
 // FlushDNSCache 刷新系统DNS缓存
+// 使用Windows API实现，兼容Win10及以上版本
 func (s *ConfigService) FlushDNSCache() error {
-	var cmd *exec.Cmd
-	var cmdDesc string
-	
-	switch runtime.GOOS {
-	case "windows":
-		// 使用固定绝对路径
-		systemRoot := os.Getenv("SystemRoot")
-		if systemRoot == "" {
-			systemRoot = "C:\\Windows"
-		}
-		
-		// 使用固定路径，提高兼容性，避免扫描目录被误报病毒
-		ipConfigPath := filepath.Join(systemRoot, "System32", "ipconfig.exe")
-		cmd = exec.Command(ipConfigPath, "/flushdns")
-		cmdDesc = "ipconfig /flushdns"
-		
-	case "darwin":
-		cmd = exec.Command("sudo", "dscacheutil", "-flushcache")
-		cmdDesc = "sudo dscacheutil -flushcache"
-	case "linux":
-		// 尝试多种Linux发行版的DNS缓存刷新命令
-		if _, err := exec.LookPath("systemctl"); err == nil {
-			cmd = exec.Command("sudo", "systemctl", "restart", "systemd-resolved")
-			cmdDesc = "sudo systemctl restart systemd-resolved"
-		} else if _, err := exec.LookPath("service"); err == nil {
-			cmd = exec.Command("sudo", "service", "network-manager", "restart")
-			cmdDesc = "sudo service network-manager restart"
-		} else {
-			return fmt.Errorf("未找到合适的DNS缓存刷新命令")
-		}
-	default:
-		return fmt.Errorf("不支持的操作系统: %s", runtime.GOOS)
-	}
-	
 	if s.ctx != nil {
-		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("正在执行DNS缓存刷新命令: %s", cmdDesc))
+		wailsRuntime.LogInfo(s.ctx, "开始使用Windows API刷新DNS缓存")
 	}
 	
-	// 执行命令
-	output, err := cmd.CombinedOutput()
-	outputStr := string(output)
-	
-	if s.ctx != nil {
-		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("命令输出: %s", outputStr))
-		if err != nil {
-			wailsRuntime.LogError(s.ctx, fmt.Sprintf("命令执行错误: %v", err))
-		}
-	}
-	
+	// 调用Windows API DnsFlushResolverCache
+	err := flushDNSResolverCache()
 	if err != nil {
-		// 改进错误处理，提供更详细的错误信息
-		errorDetails := ""
-		if err.Error() != "" {
-			errorDetails = err.Error()
-		} else {
-			errorDetails = "未知错误"
-		}
-		
-		if outputStr != "" {
-			errorDetails += fmt.Sprintf(", 输出: %s", outputStr)
-		}
-		
-		errorMsg := fmt.Sprintf("刷新DNS缓存失败: %s", errorDetails)
+		errorMsg := fmt.Sprintf("刷新DNS缓存失败: %v", err)
 		if s.ctx != nil {
 			wailsRuntime.LogError(s.ctx, errorMsg)
 		}
 		return fmt.Errorf(errorMsg)
 	}
 	
-	// 在Windows上，即使成功也可能没有输出，这是正常的
-	if runtime.GOOS == "windows" && outputStr == "" {
-		if s.ctx != nil {
-			wailsRuntime.LogInfo(s.ctx, "DNS缓存刷新命令执行成功（无输出是正常的）")
-		}
-	} else if s.ctx != nil {
-		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("DNS缓存刷新成功，输出: %s", outputStr))
+	if s.ctx != nil {
+		wailsRuntime.LogInfo(s.ctx, "DNS缓存刷新成功")
+	}
+	
+	return nil
+}
+
+// flushDNSResolverCache 调用Windows API DnsFlushResolverCache清理DNS缓存
+// 这是一个现代化的实现，避免创建新进程，避免报毒问题
+func flushDNSResolverCache() error {
+	// 加载dnsapi.dll
+	dnsapi, err := syscall.LoadLibrary("dnsapi.dll")
+	if err != nil {
+		return fmt.Errorf("加载dnsapi.dll失败: %v", err)
+	}
+	defer syscall.FreeLibrary(dnsapi)
+	
+	// 获取DnsFlushResolverCache函数
+	proc, err := syscall.GetProcAddress(dnsapi, "DnsFlushResolverCache")
+	if err != nil {
+		return fmt.Errorf("获取DnsFlushResolverCache函数失败: %v", err)
+	}
+	
+	// 调用DnsFlushResolverCache函数
+	// 该函数无参数，无返回值，调用成功即表示DNS缓存已清理
+	_, _, callErr := syscall.Syscall(proc, 0, 0, 0, 0)
+	
+	// 对于DnsFlushResolverCache，只要syscall调用没有异常就认为成功
+	// 因为该API没有返回值，Windows文档说明该函数总是成功的
+	if callErr != 0 {
+		// 如果有系统调用错误，将其转换为Go错误
+		return fmt.Errorf("调用DnsFlushResolverCache失败: %v", callErr)
 	}
 	
 	return nil
