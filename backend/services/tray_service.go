@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/getlantern/systray"
 	"github.com/skratchdot/open-golang/open"
@@ -159,7 +160,7 @@ func (s *TrayService) onReady() {
 	// 设置托盘图标
 	systray.SetIcon(iconData)
 	systray.SetTitle("host 管理工具")
-	systray.SetTooltip("host 管理工具 - 双击显示主窗口")
+	systray.SetTooltip("host 管理工具")
 
 	// 创建托盘菜单
 	mShow := systray.AddMenuItem("显示主界面", "显示主应用界面")
@@ -174,63 +175,73 @@ func (s *TrayService) onReady() {
 	go s.handleMenuEvents(mShow, mRefreshRemote, mExit)
 }
 
-// handleMenuEvents 处理菜单事件
+// handleMenuEvents 处理菜单事件 - 优雅的统一事件处理器
 func (s *TrayService) handleMenuEvents(mShow, mRefreshRemote, mExit *systray.MenuItem) {
 	defer func() {
 		if r := recover(); r != nil {
 			if s.ctx != nil {
 				wailsRuntime.LogError(s.ctx, fmt.Sprintf("托盘菜单处理发生错误: %v", r))
 			}
+			// 出错后重新启动事件处理
+			time.Sleep(1 * time.Second)
+			if !s.isRunning {
+				return
+			}
+			go s.handleMenuEvents(mShow, mRefreshRemote, mExit)
 		}
 	}()
 	
-	// 启动独立的goroutine处理每个菜单项
-	go func() {
-		for {
-			select {
-			case <-s.stopChan:
-				return
-			case <-mShow.ClickedCh:
-				// 显示主窗口
+	// 简单防抖：记录上次处理时间
+	var lastProcessTime time.Time
+	debounceInterval := 500 * time.Millisecond
+	
+	// 统一事件循环 - 只用一个goroutine处理所有事件
+	for {
+		select {
+		case <-s.stopChan:
+			return
+			
+		case <-mShow.ClickedCh:
+			// 防抖检查
+			if time.Since(lastProcessTime) < debounceInterval {
+				continue
+			}
+			lastProcessTime = time.Now()
+			
+			// 异步处理，避免阻塞事件循环
+			go func() {
 				if s.ctx != nil {
 					wailsRuntime.WindowShow(s.ctx)
 					wailsRuntime.WindowUnminimise(s.ctx)
 					wailsRuntime.WindowSetAlwaysOnTop(s.ctx, false)
 					wailsRuntime.WindowCenter(s.ctx)
 				}
+			}()
+			
+		case <-mRefreshRemote.ClickedCh:
+			if time.Since(lastProcessTime) < debounceInterval {
+				continue
 			}
-		}
-	}()
-	
-	go func() {
-		for {
-			select {
-			case <-s.stopChan:
-				return
-			case <-mRefreshRemote.ClickedCh:
-				// 更新远程源
+			lastProcessTime = time.Now()
+			
+			go func() {
 				if s.ctx != nil {
 					wailsRuntime.EventsEmit(s.ctx, "tray-refresh-remote")
 				}
-			}
-		}
-	}()
-	
-	go func() {
-		for {
-			select {
-			case <-s.stopChan:
-				return
-			case <-mExit.ClickedCh:
-				// 退出应用
+			}()
+			
+		case <-mExit.ClickedCh:
+			// 退出无需防抖，立即处理
+			go func() {
 				if s.ctx != nil {
 					wailsRuntime.LogInfo(s.ctx, "用户从托盘退出应用")
 					wailsRuntime.Quit(s.ctx)
 				}
 				systray.Quit()
-			}
+			}()
+			return
 		}
-	}()
+	}
 }
 
 // OpenSystemHostsFile 打开系统 hosts 文件
