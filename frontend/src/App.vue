@@ -33,14 +33,7 @@
         />
       </v-list>
 
-      <!-- 底部工具栏 -->
-      <template #append>
-        <div class="sidebar-footer pa-2">
-          <div class="text-caption text-center mt-2 text-medium-emphasis">
-            v1.0.0
-          </div>
-        </div>
-      </template>
+
     </v-navigation-drawer>
 
     <!-- 主内容区域 -->

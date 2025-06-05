@@ -21,70 +21,106 @@
                   需要管理员权限
                 </v-chip>
                 
-                <!-- 系统配置信息 -->
-                <v-tooltip location="bottom">
-                  <template #activator="{ props }">
-                    <v-btn
-                      v-bind="props"
-                      size="small"
-                      variant="tonal"
-                      prepend-icon="mdi-cog-outline"
-                      @click="openSystemHostsFile"
-                      :disabled="loading || saving || restoring"
-                    >
-                      系统host配置
-                    </v-btn>
-                  </template>
-                  <span>{{ systemHostsPath }}</span>
-                </v-tooltip>
-                
-                <!-- 操作按钮 -->
-                <v-btn-group variant="outlined" density="compact">
-                  <v-btn
-                    @click="showRestoreDialog = true"
-                    :disabled="loading || saving || restoring || flushing"
-                    title="恢复默认hosts文件"
-                    color="warning"
-                  >
-                    <v-icon>mdi-restore</v-icon>
-                  </v-btn>
-                  
-                  <v-btn
-                    @click="refreshContent"
-                    :loading="loading"
-                    :disabled="loading || saving || restoring || flushing"
-                    title="刷新内容"
-                  >
-                    <v-icon>mdi-refresh</v-icon>
-                  </v-btn>
-                  
-                  <v-btn
-                    @click="flushDNSCache"
-                    :loading="flushing"
-                    :disabled="loading || saving || restoring || flushing"
-                    title="刷新DNS缓存"
-                    color="info"
-                  >
-                    <v-icon>mdi-dns</v-icon>
-                  </v-btn>
-                  
-                  <v-btn
-                    @click="validateContent"
-                    :disabled="!editorContent || loading || saving || restoring || flushing"
-                    title="验证内容"
-                  >
-                    <v-icon>mdi-check-circle-outline</v-icon>
-                  </v-btn>
+                <!-- 操作按钮组 -->
+                <div class="d-flex align-center gap-1">
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon
+                        variant="text"
+                        size="small"
+                        @click="openSystemHostsFile"
+                        :disabled="loading || saving || restoring || flushing"
+                        class="icon-btn"
+                      >
+                        <v-icon>mdi-file-outline</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>系统hosts配置文件：{{ systemHostsPath }}</span>
+                  </v-tooltip>
                   
                   <v-tooltip location="bottom">
                     <template #activator="{ props }">
                       <v-btn
                         v-bind="props"
+                        icon
+                        variant="text"
+                        size="small"
+                        @click="showRestoreDialog = true"
+                        :disabled="loading || saving || restoring || flushing"
+                        class="icon-btn warning-btn"
+                      >
+                        <v-icon>mdi-restore</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>恢复默认hosts文件，清除所有自定义配置。</span>
+                  </v-tooltip>
+                  
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon
+                        variant="text"
+                        size="small"
+                        @click="refreshContent"
+                        :loading="loading"
+                        :disabled="loading || saving || restoring || flushing"
+                        class="icon-btn"
+                      >
+                        <v-icon>mdi-refresh</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>刷新内容，重新加载当前hosts文件。</span>
+                  </v-tooltip>
+                  
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon
+                        variant="text"
+                        size="small"
+                        @click="flushDNSCache"
+                        :loading="flushing"
+                        :disabled="loading || saving || restoring || flushing"
+                        class="icon-btn info-btn"
+                      >
+                        <v-icon>mdi-dns</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>刷新DNS缓存，清除系统域名解析缓存。</span>
+                  </v-tooltip>
+                  
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon
+                        variant="text"
+                        size="small"
+                        @click="validateContent"
+                        :disabled="!editorContent || loading || saving || restoring || flushing"
+                        class="icon-btn"
+                      >
+                        <v-icon>mdi-check-circle-outline</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>验证内容格式，检查hosts文件语法。</span>
+                  </v-tooltip>
+                  
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon
+                        variant="text"
+                        size="small"
                         @click="saveContentWithANSI"
                         :loading="savingAnsi"
                         :disabled="!hasChanges || saving || savingAnsi || restoring || flushing"
-                        color="success"
-                        variant="tonal"
+                        class="icon-btn success-btn"
                       >
                         <v-icon>mdi-content-save-settings</v-icon>
                       </v-btn>
@@ -92,16 +128,24 @@
                     <span>保存为ANSI编码，仅在默认的保存不生效的情况下使用。</span>
                   </v-tooltip>
                   
-                  <v-btn
-                    @click="saveContent"
-                    :loading="saving"
-                    :disabled="!hasChanges || saving || savingAnsi || restoring || flushing"
-                    color="primary"
-                    title="保存更改"
-                  >
-                    <v-icon>mdi-content-save</v-icon>
-                  </v-btn>
-                </v-btn-group>
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon
+                        variant="text"
+                        size="small"
+                        @click="saveContent"
+                        :loading="saving"
+                        :disabled="!hasChanges || saving || savingAnsi || restoring || flushing"
+                        class="icon-btn primary-btn"
+                      >
+                        <v-icon>mdi-content-save</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>保存更改，将内容写入hosts文件。</span>
+                  </v-tooltip>
+                </div>
               </div>
             </v-col>
           </v-row>
@@ -199,7 +243,7 @@
     
     <!-- 恢复默认hosts确认对话框 -->
     <v-dialog v-model="showRestoreDialog" max-width="600px" persistent>
-      <v-card class="rounded-lg restore-dialog-card">
+      <v-card class="rounded-xl modern-dialog">
         <v-card-title class="d-flex align-center">
           <v-icon color="warning" class="mr-2">mdi-alert-circle</v-icon>
           确认恢复默认hosts文件
@@ -262,6 +306,39 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 刷新确认对话框 -->
+    <v-dialog v-model="showRefreshConfirmDialog" max-width="420px" persistent>
+      <v-card class="rounded-xl modern-dialog">
+        <v-card-text class="pa-6 text-center">
+          <div class="mb-4">
+            <v-icon size="48" color="warning" class="mb-2">mdi-refresh-circle</v-icon>
+          </div>
+          <h3 class="text-h6 font-weight-bold mb-3">确认刷新内容</h3>
+          <p class="text-body-1 text-medium-emphasis mb-0">
+            您有未保存的更改，刷新将丢失这些修改。确定要继续吗？
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-6 pt-0 d-flex gap-3">
+          <v-btn
+            variant="text"
+            size="large"
+            class="flex-1"
+            @click="showRefreshConfirmDialog = false"
+          >
+            取消
+          </v-btn>
+          <v-btn
+            color="warning"
+            size="large"
+            class="flex-1"
+            @click="confirmRefresh"
+          >
+            确认刷新
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -286,6 +363,7 @@ const flushing = ref(false);
 const showUnsavedDialog = ref(false);
 const showPermissionDialog = ref(false);
 const showRestoreDialog = ref(false);
+const showRefreshConfirmDialog = ref(false);
 const pendingAction = ref(null);
 const needsAdmin = ref(false);
 const restoring = ref(false);
@@ -487,10 +565,16 @@ const saveContent = async () => {
 
 const refreshContent = async () => {
   if (hasChanges.value) {
-    const confirmed = confirm('您有未保存的更改，确定要刷新吗？');
-    if (!confirmed) return;
+    showRefreshConfirmDialog.value = true;
+    return;
   }
   
+  await loadSelectedConfig();
+  notificationStore.showNotification('内容已刷新', 'info');
+};
+
+const confirmRefresh = async () => {
+  showRefreshConfirmDialog.value = false;
   await loadSelectedConfig();
   notificationStore.showNotification('内容已刷新', 'info');
 };
@@ -772,11 +856,41 @@ watch(selectedConfigId, (newVal, oldVal) => {
   gap: 16px;
 }
 
-/* 恢复默认hosts对话框样式 */
-.restore-dialog-card {
-  border: 2px solid rgba(var(--v-theme-warning), 0.3) !important;
-  box-shadow: 0 8px 32px rgba(var(--v-theme-warning), 0.2), 
-              0 4px 16px rgba(0, 0, 0, 0.15) !important;
+/* 图标按钮样式 */
+.icon-btn {
+  opacity: 0.7;
+  transition: all 0.2s ease !important;
+  border-radius: 8px !important;
+}
+
+.icon-btn:hover {
+  opacity: 1;
+  background: rgba(var(--v-theme-on-surface), 0.08) !important;
+  transform: scale(1.05);
+}
+
+.icon-btn:active {
+  transform: scale(0.98);
+}
+
+.icon-btn.warning-btn:hover {
+  background: rgba(var(--v-theme-warning), 0.12) !important;
+  color: rgb(var(--v-theme-warning)) !important;
+}
+
+.icon-btn.info-btn:hover {
+  background: rgba(var(--v-theme-info), 0.12) !important;
+  color: rgb(var(--v-theme-info)) !important;
+}
+
+.icon-btn.success-btn:hover {
+  background: rgba(var(--v-theme-success), 0.12) !important;
+  color: rgb(var(--v-theme-success)) !important;
+}
+
+.icon-btn.primary-btn:hover {
+  background: rgba(var(--v-theme-primary), 0.12) !important;
+  color: rgb(var(--v-theme-primary)) !important;
 }
 
 /* 深色主题适配 */
@@ -789,9 +903,38 @@ watch(selectedConfigId, (newVal, oldVal) => {
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
-.v-theme--darkTheme .restore-dialog-card {
-  border-color: rgba(255, 193, 7, 0.4) !important;
-  box-shadow: 0 8px 32px rgba(255, 193, 7, 0.25), 
-              0 4px 16px rgba(0, 0, 0, 0.25) !important;
+/* 现代化对话框样式 */
+.modern-dialog {
+  border: none !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 
+              0 10px 30px rgba(0, 0, 0, 0.04) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+}
+
+.modern-dialog .v-card-text {
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.modern-dialog .v-card-actions {
+  border-radius: 0 0 24px 24px !important;
+  background: rgba(var(--v-theme-surface), 0.6) !important;
+}
+
+.modern-dialog .v-btn {
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* 暗色主题对话框 */
+.v-theme--darkTheme .modern-dialog {
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3), 
+              0 12px 36px rgba(0, 0, 0, 0.15) !important;
+}
+
+.v-theme--darkTheme .modern-dialog .v-card-actions {
+  background: rgba(var(--v-theme-surface), 0.4) !important;
 }
 </style>

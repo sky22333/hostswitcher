@@ -268,6 +268,20 @@ func (s *TrayService) OpenUserDataDir() error {
 	return err
 }
 
+// OpenBrowser 打开默认浏览器访问指定URL
+func (s *TrayService) OpenBrowser(url string) error {
+	if s.ctx != nil {
+		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("尝试打开浏览器访问: %s", url))
+	}
+	
+	err := open.Run(url)
+	if err != nil && s.ctx != nil {
+		wailsRuntime.LogError(s.ctx, fmt.Sprintf("打开浏览器失败: %v", err))
+	}
+	
+	return err
+}
+
 // Cleanup 清理资源
 func (s *TrayService) Cleanup() {
 	s.Stop() // 确保停止所有后台goroutine

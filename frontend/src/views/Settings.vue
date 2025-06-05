@@ -91,7 +91,7 @@
                     <v-icon icon="mdi-information"></v-icon>
                   </template>
                   <v-list-item-title>版本信息</v-list-item-title>
-                  <v-list-item-subtitle>host 管理工具 v1.0.0</v-list-item-subtitle>
+                  <v-list-item-subtitle>host 管理工具 v1.1</v-list-item-subtitle>
                 </v-list-item>
                 
                 <v-list-item>
@@ -198,8 +198,13 @@ async function openUserDataDir() {
 }
 
 // 打开GitHub页面
-function openGithub() {
-  window.open('https://github.com/sky22333/hosts', '_blank');
+async function openGithub() {
+  try {
+    await window.go.services.TrayService.OpenBrowser('https://github.com/sky22333/hosts');
+    notificationStore.showNotification('已打开GitHub页面', 'success');
+  } catch (error) {
+    notificationStore.showNotification('打开GitHub页面失败: ' + error, 'error');
+  }
 }
 </script>
 
