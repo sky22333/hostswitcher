@@ -204,6 +204,34 @@ export const useConfigStore = defineStore('config', () => {
       loading.value = false;
     }
   }
+
+  /**
+   * 使用ANSI编码写入系统hosts文件
+   * @param {string} content - hosts文件内容
+   */
+  async function writeSystemHostsWithANSI(content) {
+    loading.value = true;
+    try {
+      await window.go.services.ConfigService.WriteSystemHostsWithANSI(content);
+    } catch (error) {
+      console.error('使用ANSI编码写入系统hosts文件失败:', error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * 刷新系统DNS缓存
+   */
+  async function flushDNSCache() {
+    try {
+      await window.go.services.ConfigService.FlushDNSCache();
+    } catch (error) {
+      console.error('刷新DNS缓存失败:', error);
+      throw error;
+    }
+  }
   
   return {
     configs,
@@ -219,9 +247,11 @@ export const useConfigStore = defineStore('config', () => {
     applyConfig,
     readSystemHosts,
     writeSystemHosts,
+    writeSystemHostsWithANSI,
     validateHostsContent,
     isAdminRequired,
     isAdminMode,
-    restoreDefaultHosts
+    restoreDefaultHosts,
+    flushDNSCache
   };
 });

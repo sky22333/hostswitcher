@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.org/x/text/encoding/simplifiedchinese"
 
 	"hostswitcher/backend/models"
 )
@@ -654,5 +656,146 @@ func (s *ConfigService) RestoreDefaultHosts() error {
 	wailsRuntime.EventsEmit(s.ctx, "config-list-changed")
 	wailsRuntime.EventsEmit(s.ctx, "system-hosts-updated")
 
+	return nil
+}
+
+// WriteSystemHostsWithANSI 以ANSI编码写入系统hosts文件，提高兼容性
+func (s *ConfigService) WriteSystemHostsWithANSI(content string) error {
+	// 验证内容
+	if err := s.ValidateHostsContent(content); err != nil {
+		return fmt.Errorf("内容验证失败: %v", err)
+	}
+	
+	// 转换为ANSI编码 (GBK)
+	encoder := simplifiedchinese.GBK.NewEncoder()
+	ansiContent, err := encoder.String(content)
+	if err != nil {
+		// 如果转换失败，使用原始内容
+		if s.ctx != nil {
+			wailsRuntime.LogWarning(s.ctx, fmt.Sprintf("ANSI编码转换失败，使用原始内容: %v", err))
+		}
+		ansiContent = content
+	}
+	
+	// 写入文件
+	err = os.WriteFile(s.systemHosts, []byte(ansiContent), 0644)
+	if err != nil {
+		return fmt.Errorf("写入失败: %v", err)
+	}
+	
+	// 发出系统hosts更新事件
+	if s.ctx != nil {
+		wailsRuntime.EventsEmit(s.ctx, "system-hosts-updated")
+		wailsRuntime.LogInfo(s.ctx, "已使用ANSI编码保存hosts文件")
+	}
+	
+	return nil
+}
+
+// FlushDNSCache 刷新系统DNS缓存
+func (s *ConfigService) FlushDNSCache() error {
+	var cmd *exec.Cmd
+	var cmdDesc string
+	
+	switch runtime.GOOS {
+	case "windows":
+		// 获取Windows系统目录
+		systemRoot := os.Getenv("SystemRoot")
+		if systemRoot == "" {
+			systemRoot = os.Getenv("WINDIR")
+		}
+		if systemRoot == "" {
+			systemRoot = "C:\\Windows"
+		}
+		
+		// 尝试多个可能的ipconfig路径
+		ipConfigPaths := []string{
+			filepath.Join(systemRoot, "System32", "ipconfig.exe"),
+			filepath.Join(systemRoot, "SysWOW64", "ipconfig.exe"),
+			"ipconfig.exe", // 最后尝试相对路径
+		}
+		
+		var ipConfigPath string
+		for _, path := range ipConfigPaths {
+			if _, err := os.Stat(path); err == nil {
+				ipConfigPath = path
+				break
+			}
+		}
+		
+		if ipConfigPath == "" {
+			// 如果找不到ipconfig.exe，尝试直接使用命令名
+			ipConfigPath = "ipconfig"
+		}
+		
+		cmd = exec.Command(ipConfigPath, "/flushdns")
+		cmdDesc = fmt.Sprintf("%s /flushdns", ipConfigPath)
+		
+		if s.ctx != nil {
+			wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("使用ipconfig路径: %s", ipConfigPath))
+		}
+		
+	case "darwin":
+		cmd = exec.Command("sudo", "dscacheutil", "-flushcache")
+		cmdDesc = "sudo dscacheutil -flushcache"
+	case "linux":
+		// 尝试多种Linux发行版的DNS缓存刷新命令
+		if _, err := exec.LookPath("systemctl"); err == nil {
+			cmd = exec.Command("sudo", "systemctl", "restart", "systemd-resolved")
+			cmdDesc = "sudo systemctl restart systemd-resolved"
+		} else if _, err := exec.LookPath("service"); err == nil {
+			cmd = exec.Command("sudo", "service", "network-manager", "restart")
+			cmdDesc = "sudo service network-manager restart"
+		} else {
+			return fmt.Errorf("未找到合适的DNS缓存刷新命令")
+		}
+	default:
+		return fmt.Errorf("不支持的操作系统: %s", runtime.GOOS)
+	}
+	
+	if s.ctx != nil {
+		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("正在执行DNS缓存刷新命令: %s", cmdDesc))
+	}
+	
+	// 执行命令
+	output, err := cmd.CombinedOutput()
+	outputStr := string(output)
+	
+	if s.ctx != nil {
+		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("命令输出: %s", outputStr))
+		if err != nil {
+			wailsRuntime.LogError(s.ctx, fmt.Sprintf("命令执行错误: %v", err))
+		}
+	}
+	
+	if err != nil {
+		// 改进错误处理，提供更详细的错误信息
+		errorDetails := ""
+		if err.Error() != "" {
+			errorDetails = err.Error()
+		} else {
+			errorDetails = "未知错误"
+		}
+		
+		if outputStr != "" {
+			errorDetails += fmt.Sprintf(", 输出: %s", outputStr)
+		}
+		
+		errorMsg := fmt.Sprintf("刷新DNS缓存失败: %s", errorDetails)
+		if s.ctx != nil {
+			wailsRuntime.LogError(s.ctx, errorMsg)
+		}
+		return fmt.Errorf(errorMsg)
+	}
+	
+	// 在Windows上，即使成功也可能没有输出，这是正常的
+	if runtime.GOOS == "windows" && outputStr == "" {
+		if s.ctx != nil {
+			wailsRuntime.LogInfo(s.ctx, "DNS缓存刷新命令执行成功（无输出是正常的）")
+		}
+	} else if s.ctx != nil {
+		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("DNS缓存刷新成功，输出: %s", outputStr))
+	}
+	
 	return nil
 }

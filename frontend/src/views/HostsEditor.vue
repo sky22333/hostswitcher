@@ -42,7 +42,7 @@
                 <v-btn-group variant="outlined" density="compact">
                   <v-btn
                     @click="showRestoreDialog = true"
-                    :disabled="loading || saving || restoring"
+                    :disabled="loading || saving || restoring || flushing"
                     title="恢复默认hosts文件"
                     color="warning"
                   >
@@ -52,24 +52,50 @@
                   <v-btn
                     @click="refreshContent"
                     :loading="loading"
-                    :disabled="loading || saving || restoring"
+                    :disabled="loading || saving || restoring || flushing"
                     title="刷新内容"
                   >
                     <v-icon>mdi-refresh</v-icon>
                   </v-btn>
                   
                   <v-btn
+                    @click="flushDNSCache"
+                    :loading="flushing"
+                    :disabled="loading || saving || restoring || flushing"
+                    title="刷新DNS缓存"
+                    color="info"
+                  >
+                    <v-icon>mdi-dns</v-icon>
+                  </v-btn>
+                  
+                  <v-btn
                     @click="validateContent"
-                    :disabled="!editorContent || loading || saving || restoring"
+                    :disabled="!editorContent || loading || saving || restoring || flushing"
                     title="验证内容"
                   >
                     <v-icon>mdi-check-circle-outline</v-icon>
                   </v-btn>
                   
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        @click="saveContentWithANSI"
+                        :loading="savingAnsi"
+                        :disabled="!hasChanges || saving || savingAnsi || restoring || flushing"
+                        color="success"
+                        variant="tonal"
+                      >
+                        <v-icon>mdi-content-save-settings</v-icon>
+                      </v-btn>
+                    </template>
+                    <span>保存为ANSI编码</span>
+                  </v-tooltip>
+                  
                   <v-btn
                     @click="saveContent"
                     :loading="saving"
-                    :disabled="!hasChanges || saving || restoring"
+                    :disabled="!hasChanges || saving || savingAnsi || restoring || flushing"
                     color="primary"
                     title="保存更改"
                   >
@@ -173,7 +199,7 @@
     
     <!-- 恢复默认hosts确认对话框 -->
     <v-dialog v-model="showRestoreDialog" max-width="600px" persistent>
-      <v-card class="rounded-lg">
+      <v-card class="rounded-lg restore-dialog-card">
         <v-card-title class="d-flex align-center">
           <v-icon color="warning" class="mr-2">mdi-alert-circle</v-icon>
           确认恢复默认hosts文件
@@ -255,6 +281,8 @@ const originalContent = ref('');
 const selectedConfigId = ref('system');
 const loading = ref(false);
 const saving = ref(false);
+const savingAnsi = ref(false);
+const flushing = ref(false);
 const showUnsavedDialog = ref(false);
 const showPermissionDialog = ref(false);
 const showRestoreDialog = ref(false);
@@ -572,6 +600,86 @@ const confirmRestoreDefault = async () => {
   await restoreDefault();
 };
 
+// ANSI编码保存方法
+const saveContentWithANSI = async () => {
+  if (!hasChanges.value) {
+    console.log('⚠️ 没有变化，跳过ANSI保存');
+    return;
+  }
+  
+  console.log('=== 开始ANSI编码保存 ===');
+  savingAnsi.value = true;
+  try {
+    if (selectedConfigId.value === 'system') {
+      console.log('使用ANSI编码保存到系统hosts文件...');
+      
+      // 检查管理员权限
+      if (needsAdmin.value) {
+        console.log('❌ 需要管理员权限，显示权限对话框');
+        showPermissionDialog.value = true;
+        return;
+      }
+      
+      // 验证内容
+      console.log('验证hosts内容...');
+      await configStore.validateHostsContent(editorContent.value);
+      console.log('✅ 内容验证通过');
+      
+      // 使用ANSI编码保存到系统hosts文件
+      console.log('使用ANSI编码写入系统hosts文件...');
+      await configStore.writeSystemHostsWithANSI(editorContent.value);
+      console.log('✅ ANSI编码写入成功');
+      
+      originalContent.value = editorContent.value;
+      notificationStore.showNotification('系统 hosts 文件已使用ANSI编码保存，提高兼容性', 'success');
+      console.log('✅ ANSI保存完成');
+    } else {
+      // 对于配置文件，使用普通保存方式
+      const config = selectedConfig.value;
+      if (config) {
+        console.log('保存到配置:', config.Name);
+        await configStore.updateConfig(
+          config.ID,
+          config.Name,
+          config.Description,
+          editorContent.value
+        );
+        originalContent.value = editorContent.value;
+        notificationStore.showNotification('配置已保存', 'success');
+        console.log('✅ 配置保存完成');
+      } else {
+        console.error('❌ 找不到要保存的配置');
+      }
+    }
+  } catch (error) {
+    console.error('❌ ANSI保存失败:', error);
+    console.error('错误详情:', error.message);
+    notificationStore.showNotification('ANSI保存失败: ' + error.message, 'error');
+  } finally {
+    savingAnsi.value = false;
+    console.log('=== ANSI保存状态重置 ===');
+  }
+};
+
+// DNS缓存刷新方法
+const flushDNSCache = async () => {
+  console.log('=== 开始刷新DNS缓存 ===');
+  flushing.value = true;
+  try {
+    console.log('调用后端刷新DNS缓存...');
+    await configStore.flushDNSCache();
+    console.log('✅ DNS缓存刷新成功');
+    notificationStore.showNotification('DNS缓存已刷新', 'success');
+  } catch (error) {
+    console.error('❌ DNS缓存刷新失败:', error);
+    console.error('错误详情:', error.message);
+    notificationStore.showNotification('DNS缓存刷新失败: ' + error.message, 'error');
+  } finally {
+    flushing.value = false;
+    console.log('=== DNS缓存刷新状态重置 ===');
+  }
+};
+
 // 生命周期
 onMounted(async () => {
   try {
@@ -664,6 +772,13 @@ watch(selectedConfigId, (newVal, oldVal) => {
   gap: 16px;
 }
 
+/* 恢复默认hosts对话框样式 */
+.restore-dialog-card {
+  border: 2px solid rgba(var(--v-theme-warning), 0.3) !important;
+  box-shadow: 0 8px 32px rgba(var(--v-theme-warning), 0.2), 
+              0 4px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
 /* 深色主题适配 */
 .v-theme--darkTheme .editor-toolbar,
 .v-theme--darkTheme .editor-main {
@@ -672,5 +787,11 @@ watch(selectedConfigId, (newVal, oldVal) => {
 
 .v-theme--darkTheme .editor-statusbar {
   border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.v-theme--darkTheme .restore-dialog-card {
+  border-color: rgba(255, 193, 7, 0.4) !important;
+  box-shadow: 0 8px 32px rgba(255, 193, 7, 0.25), 
+              0 4px 16px rgba(0, 0, 0, 0.25) !important;
 }
 </style>
