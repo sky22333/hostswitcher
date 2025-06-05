@@ -200,7 +200,7 @@ async function openUserDataDir() {
 // 打开GitHub页面
 async function openGithub() {
   try {
-    await window.go.services.TrayService.OpenBrowser('https://github.com/sky22333/hosts');
+    await window.go.services.TrayService.OpenBrowser('https://github.com/sky22333/hostswitcher');
     notificationStore.showNotification('已打开GitHub页面', 'success');
   } catch (error) {
     notificationStore.showNotification('打开GitHub页面失败: ' + error, 'error');
