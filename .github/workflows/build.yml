@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号 (例如: v1.0.0)'
+        description: '版本号 (例如: v1.0)'
         required: true
         type: string
       prerelease:
@@ -55,12 +55,12 @@ jobs:
 
       - name: 🔨 构建 Windows 应用
         run: |
-          wails build -platform windows/amd64 -clean -upx -ldflags "-X main.version=${{ github.event.inputs.version }}"
+          wails build -platform windows/amd64 -clean -upx -ldflags "-s -w -H windowsgui"
 
       - name: 📦 创建 Windows 压缩包
         run: |
           mkdir -p dist
-          7z a dist/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip build/bin/HostSwitcher.exe
+          7z a dist/HostSwitcher-windows-amd64.zip build/bin/HostSwitcher.exe
 
       - name: 📤 上传 Windows 构建产物
         uses: actions/upload-artifact@v4
@@ -118,7 +118,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.version }}
-          name: 🌐 Hosts 管理工具 ${{ github.event.inputs.version }}
+          name: ${{ github.event.inputs.version }}
           body_path: CHANGELOG.md
           prerelease: ${{ github.event.inputs.prerelease }}
           draft: false
