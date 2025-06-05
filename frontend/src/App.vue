@@ -112,9 +112,8 @@ const activeTab = ref('editor');
 
 // 监听activeTab变化
 watch(activeTab, (newTab, oldTab) => {
-  console.log(`页面切换: ${oldTab} -> ${newTab}`);
   nextTick(() => {
-    console.log(`页面切换完成: ${newTab}`);
+    // Tab切换完成
   });
 });
 
@@ -145,16 +144,13 @@ const currentPageTitle = computed(() => {
 
 // 生命周期
 onMounted(async () => {
-  console.log('主应用已挂载，开始初始化...');
   try {
     await configStore.initialize();
-    console.log('配置store初始化完成');
     
     // 监听托盘事件
     if (window.runtime && window.runtime.EventsOn) {
       // 监听托盘更新远程源事件
       window.runtime.EventsOn('tray-refresh-remote', () => {
-        console.log('托盘请求更新远程源');
         // 切换到远程源页面
         activeTab.value = 'remote';
         notificationStore.showNotification('正在更新远程源...', 'info');
@@ -162,7 +158,6 @@ onMounted(async () => {
       
       // 监听托盘应用配置事件
       window.runtime.EventsOn('tray-apply-config', (configId) => {
-        console.log('托盘请求应用配置:', configId);
         if (configId) {
           configStore.applyConfig(configId).then(() => {
             notificationStore.showNotification('配置已应用', 'success');
@@ -171,11 +166,7 @@ onMounted(async () => {
           });
         }
       });
-      
-
     }
-    
-    console.log('主应用初始化完成');
   } catch (error) {
     console.error('主应用初始化失败:', error);
     notificationStore.showNotification('初始化失败: ' + error.message, 'error');

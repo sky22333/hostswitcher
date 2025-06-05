@@ -435,14 +435,8 @@ const loadConfigs = async () => {
 
 const loadSelectedConfig = async () => {
   try {
-    console.log('=== 开始加载配置 ===');
-    console.log('当前选择的配置ID:', selectedConfigId.value);
-    
     if (selectedConfigId.value === 'system') {
-      console.log('正在直接读取系统hosts文件...');
-      
       const content = await configStore.readSystemHosts();
-      console.log('读取到的系统hosts内容长度:', content.length);
       
       // 更新编辑器内容
       editorContent.value = '';
@@ -451,40 +445,32 @@ const loadSelectedConfig = async () => {
       originalContent.value = content;
       
       // 处理空文件情况
-      if (content.trim()) {
-        console.log('✅ 成功加载系统hosts文件');
-      } else {
+      if (!content.trim()) {
         notificationStore.showNotification('系统 hosts 文件为空，已创建默认内容', 'info');
         const defaultContent = "# Copyright (c) 1993-2009 Microsoft Corp.\n#\n# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.\n#\n127.0.0.1\tlocalhost\n::1\t\tlocalhost\n";
         editorContent.value = '';
         await nextTick();
         editorContent.value = defaultContent;
         originalContent.value = defaultContent;
-        console.log('⚠️ 系统hosts文件为空，使用默认内容');
       }
     } else {
       // 加载选中的配置
       const config = configStore.configs.find(c => c.ID === selectedConfigId.value);
       if (config) {
-        console.log('正在加载配置:', config.Name);
         editorContent.value = '';
         await nextTick();
         editorContent.value = config.Content;
         originalContent.value = config.Content;
       } else {
         console.error('找不到配置:', selectedConfigId.value);
-        // 如果配置不存在，强制回退到系统hosts
         selectedConfigId.value = 'system';
         await loadSelectedConfig();
         return;
       }
     }
-    
-    console.log('=== 加载配置完成 ===');
   } catch (error) {
-    console.error('❌ 加载内容失败:', error);
+    console.error('加载内容失败:', error);
     notificationStore.showNotification('加载内容失败: ' + error.message, 'error');
-    
   }
 };
 
@@ -499,47 +485,30 @@ const handleConfigChange = async () => {
 
 const saveContent = async () => {
   if (!hasChanges.value) {
-    console.log('⚠️ 没有变化，跳过保存');
     return;
   }
-  
-  console.log('=== 开始保存内容 ===');
-  console.log('当前选择配置:', selectedConfigId.value);
-  console.log('editorContent长度:', editorContent.value.length);
-  console.log('needsAdmin:', needsAdmin.value);
   
   saving.value = true;
   try {
     if (selectedConfigId.value === 'system') {
-      console.log('保存到系统hosts文件...');
-      
       // 检查管理员权限
       if (needsAdmin.value) {
-        console.log('❌ 需要管理员权限，显示权限对话框');
         showPermissionDialog.value = true;
         return;
       }
       
-      console.log('✅ 有管理员权限，开始保存');
-      
       // 验证内容
-      console.log('验证hosts内容...');
       await configStore.validateHostsContent(editorContent.value);
-      console.log('✅ 内容验证通过');
       
       // 保存到系统hosts文件
-      console.log('写入系统hosts文件...');
       await configStore.writeSystemHosts(editorContent.value);
-      console.log('✅ 写入成功');
       
       originalContent.value = editorContent.value;
       notificationStore.showNotification('系统 hosts 文件已保存', 'success');
-      console.log('✅ 保存完成');
     } else {
       // 保存到配置
       const config = selectedConfig.value;
       if (config) {
-        console.log('保存到配置:', config.Name);
         await configStore.updateConfig(
           config.ID,
           config.Name,
@@ -548,18 +517,15 @@ const saveContent = async () => {
         );
         originalContent.value = editorContent.value;
         notificationStore.showNotification('配置已保存', 'success');
-        console.log('✅ 配置保存完成');
       } else {
-        console.error('❌ 找不到要保存的配置');
+        console.error('找不到要保存的配置');
       }
     }
   } catch (error) {
-    console.error('❌ 保存失败:', error);
-    console.error('错误详情:', error.message);
+    console.error('保存失败:', error);
     notificationStore.showNotification('保存失败: ' + error.message, 'error');
   } finally {
     saving.value = false;
-    console.log('=== 保存状态重置 ===');
   }
 };
 
@@ -607,16 +573,7 @@ const onEditorChange = () => {
 
 const checkAdminPermission = async () => {
   try {
-    console.log('检查管理员权限...');
     needsAdmin.value = await configStore.isAdminRequired();
-    console.log('IsAdminRequired返回:', needsAdmin.value);
-    console.log('needsAdmin.value设置为:', needsAdmin.value);
-    
-    if (needsAdmin.value) {
-      console.log('⚠️ 需要管理员权限');
-    } else {
-      console.log('✅ 有足够权限');
-    }
   } catch (error) {
     console.error('检查权限失败:', error);
     needsAdmin.value = true;
@@ -624,30 +581,22 @@ const checkAdminPermission = async () => {
 };
 
 const restoreDefault = async () => {
-  console.log('=== 开始恢复默认hosts ===');
   restoring.value = true;
   try {
-    console.log('调用后端恢复默认hosts...');
     // 恢复默认hosts文件
     await configStore.restoreDefaultHosts();
-    console.log('✅ 后端恢复成功');
     
     // 等待一下确保文件系统同步
     await new Promise(resolve => setTimeout(resolve, 200));
     
     // 强制重新加载内容，确保显示最新状态
-    console.log('强制重新加载内容...');
     await loadSelectedConfig();
-    console.log('✅ 内容重新加载完成');
     
     // 再次检查内容是否正确更新
     const newContent = await configStore.readSystemHosts();
-    console.log('重新读取的内容长度:', newContent.length);
-    console.log('重新读取的内容开头:', newContent.substring(0, 100));
     
     // 确保编辑器内容也正确更新
     if (editorContent.value !== newContent) {
-      console.log('编辑器内容不一致，再次更新...');
       editorContent.value = '';
       await nextTick();
       editorContent.value = newContent;
@@ -656,21 +605,16 @@ const restoreDefault = async () => {
     }
     
     notificationStore.showNotification('系统 hosts 文件已恢复为默认', 'success');
-    console.log('✅ 恢复默认完成');
   } catch (error) {
-    console.error('❌ 恢复默认失败:', error);
-    console.error('错误详情:', error.message);
-    console.error('错误堆栈:', error.stack);
+    console.error('恢复默认失败:', error);
     notificationStore.showNotification('恢复默认失败: ' + error.message, 'error');
   } finally {
     restoring.value = false;
-    console.log('=== 恢复状态重置 ===');
   }
 };
 
 const openSystemHostsFile = async () => {
   try {
-    console.log('正在打开系统hosts文件...');
     await window.go.services.TrayService.OpenSystemHostsFile();
     notificationStore.showNotification('已打开系统Hosts文件', 'success');
   } catch (error) {
@@ -687,41 +631,30 @@ const confirmRestoreDefault = async () => {
 // ANSI编码保存方法
 const saveContentWithANSI = async () => {
   if (!hasChanges.value) {
-    console.log('⚠️ 没有变化，跳过ANSI保存');
     return;
   }
   
-  console.log('=== 开始ANSI编码保存 ===');
   savingAnsi.value = true;
   try {
     if (selectedConfigId.value === 'system') {
-      console.log('使用ANSI编码保存到系统hosts文件...');
-      
       // 检查管理员权限
       if (needsAdmin.value) {
-        console.log('❌ 需要管理员权限，显示权限对话框');
         showPermissionDialog.value = true;
         return;
       }
       
       // 验证内容
-      console.log('验证hosts内容...');
       await configStore.validateHostsContent(editorContent.value);
-      console.log('✅ 内容验证通过');
       
       // 使用ANSI编码保存到系统hosts文件
-      console.log('使用ANSI编码写入系统hosts文件...');
       await configStore.writeSystemHostsWithANSI(editorContent.value);
-      console.log('✅ ANSI编码写入成功');
       
       originalContent.value = editorContent.value;
       notificationStore.showNotification('系统 hosts 文件已使用ANSI编码保存，提高兼容性', 'success');
-      console.log('✅ ANSI保存完成');
     } else {
       // 对于配置文件，使用普通保存方式
       const config = selectedConfig.value;
       if (config) {
-        console.log('保存到配置:', config.Name);
         await configStore.updateConfig(
           config.ID,
           config.Name,
@@ -730,46 +663,35 @@ const saveContentWithANSI = async () => {
         );
         originalContent.value = editorContent.value;
         notificationStore.showNotification('配置已保存', 'success');
-        console.log('✅ 配置保存完成');
       } else {
-        console.error('❌ 找不到要保存的配置');
+        console.error('找不到要保存的配置');
       }
     }
   } catch (error) {
-    console.error('❌ ANSI保存失败:', error);
-    console.error('错误详情:', error.message);
+    console.error('ANSI保存失败:', error);
     notificationStore.showNotification('ANSI保存失败: ' + error.message, 'error');
   } finally {
     savingAnsi.value = false;
-    console.log('=== ANSI保存状态重置 ===');
   }
 };
 
 // DNS缓存刷新方法
 const flushDNSCache = async () => {
-  console.log('=== 开始刷新DNS缓存 ===');
   flushing.value = true;
   try {
-    console.log('调用后端刷新DNS缓存...');
     await configStore.flushDNSCache();
-    console.log('✅ DNS缓存刷新成功');
     notificationStore.showNotification('DNS缓存已刷新', 'success');
   } catch (error) {
-    console.error('❌ DNS缓存刷新失败:', error);
-    console.error('错误详情:', error.message);
+    console.error('DNS缓存刷新失败:', error);
     notificationStore.showNotification('DNS缓存刷新失败: ' + error.message, 'error');
   } finally {
     flushing.value = false;
-    console.log('=== DNS缓存刷新状态重置 ===');
   }
 };
 
 // 生命周期
 onMounted(async () => {
   try {
-    // 首先清理所有配置数据，确保干净状态
-    console.log('正在清理配置数据...');
-    
     // 初始化配置store
     await configStore.initialize();
     
@@ -783,21 +705,17 @@ onMounted(async () => {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     // 强制加载系统hosts文件
-    console.log('强制加载系统hosts文件...');
     await loadSelectedConfig();
     
     // 监听配置列表变化事件
     if (window.runtime && window.runtime.EventsOn) {
       window.runtime.EventsOn('config-list-changed', () => {
-        console.log('配置列表已变化，重新加载...');
         loadConfigs();
       });
       window.runtime.EventsOn('config-applied', () => {
-        console.log('配置已应用，重新加载...');
         loadConfigs();
       });
       window.runtime.EventsOn('system-hosts-updated', () => {
-        console.log('系统hosts已更新，重新加载...');
         if (selectedConfigId.value === 'system') {
           loadSelectedConfig();
         }

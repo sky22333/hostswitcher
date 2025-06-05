@@ -308,20 +308,16 @@ const updateFreqOptions = [
 
 // 生命周期钩子
 onMounted(async () => {
-  console.log('RemoteHosts组件已挂载，开始初始化...');
-  
   // 强制刷新远程源列表
   await refreshRemoteSources();
   
   // 监听远程源列表变化事件
   window.runtime.EventsOn('remote-source-list-changed', () => {
-    console.log('收到remote-source-list-changed事件，刷新列表');
     refreshRemoteSources();
   });
   
   // 监听远程源状态变化事件
   window.runtime.EventsOn('remote-source-status-changed', (id) => {
-    console.log('收到remote-source-status-changed事件，ID:', id);
     refreshRemoteSources();
   });
   
@@ -347,12 +343,9 @@ onMounted(async () => {
   window.runtime.EventsOn('remote-source-cleaned-from-system', (sourceName) => {
     notificationStore.showNotification(`远程源 "${sourceName}" 的内容已从系统hosts文件中清理`, 'info');
   });
-  
-  console.log('RemoteHosts组件初始化完成，当前远程源数量:', remoteStore.remoteSources.length);
 });
 
 onBeforeUnmount(() => {
-  console.log('RemoteHosts组件即将卸载，清理事件监听');
   // 移除事件监听
   window.runtime.EventsOff('remote-source-list-changed');
   window.runtime.EventsOff('remote-source-status-changed');
@@ -364,10 +357,8 @@ onBeforeUnmount(() => {
 
 // 刷新远程源列表
 async function refreshRemoteSources() {
-  console.log('开始刷新远程源列表...');
   try {
     await remoteStore.loadRemoteSources();
-    console.log('远程源列表刷新成功，数量:', remoteStore.remoteSources.length);
     // 强制触发响应式更新
     await nextTick();
   } catch (error) {
@@ -378,7 +369,6 @@ async function refreshRemoteSources() {
 
 // 获取远程内容
 async function fetchRemoteContent(source) {
-  console.log('获取远程内容:', source);
   if (!source || !source.ID) {
     console.error('远程源数据无效:', source);
     notificationStore.showNotification('远程源数据无效', 'error');
@@ -400,7 +390,6 @@ async function fetchRemoteContent(source) {
 
 // 编辑远程源
 function editRemoteSource(source) {
-  console.log('编辑远程源:', source);
   if (!source || !source.ID) {
     console.error('远程源数据无效:', source);
     notificationStore.showNotification('远程源数据无效', 'error');
@@ -419,7 +408,6 @@ function editRemoteSource(source) {
 
 // 确认删除远程源
 function confirmDelete(source) {
-  console.log('确认删除远程源:', source);
   if (!source || !source.ID) {
     console.error('远程源数据无效:', source);
     notificationStore.showNotification('远程源数据无效', 'error');
@@ -435,7 +423,6 @@ async function deleteRemoteSource() {
   if (!sourceToDelete.value) return;
   
   try {
-    console.log('正在删除远程源:', sourceToDelete.value.ID);
     await remoteStore.deleteRemoteSource(sourceToDelete.value.ID);
     notificationStore.showNotification('远程源已成功删除', 'success');
     showDeleteDialog.value = false;
@@ -465,7 +452,6 @@ async function saveRemoteSource() {
         return;
       }
       
-      console.log('正在更新远程源:', sourceForm.value);
       await remoteStore.updateRemoteSource(
         sourceForm.value.id,
         sourceForm.value.name,
@@ -474,7 +460,6 @@ async function saveRemoteSource() {
       );
       notificationStore.showNotification('远程源已成功更新', 'success');
     } else {
-      console.log('正在添加远程源:', sourceForm.value);
       await remoteStore.addRemoteSource(
         sourceForm.value.name,
         sourceForm.value.url,
@@ -564,7 +549,6 @@ function safeDisplayText(text, maxLength = 50) {
     
     return cleaned;
   } catch (error) {
-    console.warn('RemoteHosts: 文本处理失败:', error, text);
     return String(text || '').substring(0, maxLength);
   }
 }
@@ -584,7 +568,6 @@ function safeDisplayUrl(url) {
     }
     return cleaned;
   } catch (error) {
-    console.warn('RemoteHosts: URL处理失败:', error, url);
     return String(url || '');
   }
 }
@@ -610,7 +593,6 @@ function formatDate(dateString) {
     
     // 验证日期有效性
     if (isNaN(date.getTime())) {
-      console.warn('RemoteHosts: 无效的日期格式:', dateString);
       return '时间格式错误';
     }
     
@@ -625,14 +607,12 @@ function formatDate(dateString) {
       timeZone: 'Asia/Shanghai'
     });
   } catch (error) {
-    console.warn('RemoteHosts: 日期格式化失败:', error, dateString);
     return '时间格式错误';
   }
 }
 
 // 直接应用到系统hosts文件
 async function applyDirectlyToSystem(source) {
-  console.log('直接应用到系统:', source);
   if (!source || !source.ID) {
     console.error('远程源数据无效:', source);
     notificationStore.showNotification('远程源数据无效', 'error');

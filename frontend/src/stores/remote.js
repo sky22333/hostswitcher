@@ -44,8 +44,9 @@ export const useRemoteStore = defineStore('remote', () => {
       if (normalized.ID) {
         normalized.ID = String(normalized.ID).trim();
 
+        // 验证UUID格式（可选）
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalized.ID)) {
-          console.warn('RemoteStore: ID格式可能不标准:', normalized.ID);
+          // ID格式可能不是标准UUID，但仍然可以使用
         }
       }
       
@@ -62,27 +63,24 @@ export const useRemoteStore = defineStore('remote', () => {
         normalized.URL = String(normalized.URL).trim();
         // 基本URL格式验证
         if (!/^https?:\/\/.+/i.test(normalized.URL)) {
-          console.warn('RemoteStore: URL格式可能不正确:', normalized.URL);
+          // URL格式可能不正确，但仍然可以使用
         }
       }
       
       // 标准化UpdateFreq字段
       const validFreqs = ['manual', 'startup'];
       if (!validFreqs.includes(normalized.UpdateFreq)) {
-        console.warn('RemoteStore: 不支持的更新频率，使用默认值:', normalized.UpdateFreq);
         normalized.UpdateFreq = 'manual';
       }
       
       // 标准化Status字段
       const validStatuses = ['pending', 'success', 'failed'];
       if (!validStatuses.includes(normalized.Status)) {
-        console.warn('RemoteStore: 不支持的状态，使用默认值:', normalized.Status);
         normalized.Status = 'pending';
       }
       
       // 验证必需字段
       if (!normalized.ID || !normalized.Name || !normalized.URL) {
-        console.warn('RemoteStore: 远程源缺少必需字段:', normalized);
         return null;
       }
       
@@ -98,7 +96,6 @@ export const useRemoteStore = defineStore('remote', () => {
    */
   function normalizeRemoteSourceArray(sources) {
     if (!Array.isArray(sources)) {
-      console.warn('RemoteStore: 远程源数据不是数组，尝试转换:', sources);
       // 尝试转换单个对象为数组
       if (sources && typeof sources === 'object') {
         sources = [sources];
@@ -115,7 +112,6 @@ export const useRemoteStore = defineStore('remote', () => {
       }
     }
     
-    console.log(`RemoteStore: 标准化完成，有效数据: ${normalized.length}/${sources.length}`);
     return normalized;
   }
   
@@ -146,11 +142,6 @@ export const useRemoteStore = defineStore('remote', () => {
     );
     
     if (!source) {
-      console.log('RemoteStore: 当前远程源列表:', remoteSources.value.map(s => ({ 
-        ID: s.ID, 
-        Name: s.Name,
-        originalId: s.id || s.ID // 显示原始ID用于调试
-      })));
       throw new Error('本地列表中未找到指定的远程源');
     }
     
@@ -161,11 +152,9 @@ export const useRemoteStore = defineStore('remote', () => {
    * 加载所有远程源
    */
   async function loadRemoteSources() {
-    console.log('RemoteStore: 开始加载远程源...');
     loading.value = true;
     try {
       const rawSources = await window.go.services.NetworkService.GetAllRemoteSources();
-      console.log('RemoteStore: 后端返回的原始数据:', rawSources);
       
       // 使用标准化函数处理数据，兼容各种格式
       const normalizedSources = normalizeRemoteSourceArray(rawSources);
@@ -184,13 +173,6 @@ export const useRemoteStore = defineStore('remote', () => {
       });
       
       remoteSources.value = normalizedSources;
-      console.log('RemoteStore: 远程源加载成功，数量:', remoteSources.value.length);
-      
-      // 输出每个远程源的关键信息用于调试
-      remoteSources.value.forEach((source, index) => {
-        console.log(`RemoteStore: [${index}] ${source.Name} (${source.ID}) - ${source.Status}`);
-      });
-      
     } catch (error) {
       console.error('RemoteStore: 加载远程源失败:', error);
       remoteSources.value = [];
@@ -204,11 +186,9 @@ export const useRemoteStore = defineStore('remote', () => {
    * 添加远程源
    */
   async function addRemoteSource(name, url, updateFreq) {
-    console.log('RemoteStore: 开始添加远程源...');
     loading.value = true;
     try {
       const newSource = await window.go.services.NetworkService.AddRemoteSource(name, url, updateFreq);
-      console.log('RemoteStore: 远程源添加成功:', newSource);
       
       // 重新加载远程源列表确保数据同步
       await loadRemoteSources();
@@ -224,7 +204,6 @@ export const useRemoteStore = defineStore('remote', () => {
    * 更新远程源
    */
   async function updateRemoteSource(id, name, url, updateFreq) {
-    console.log('RemoteStore: 开始更新远程源...');
     loading.value = true;
     try {
       const updatedSource = await window.go.services.NetworkService.UpdateRemoteSource(id, name, url, updateFreq);

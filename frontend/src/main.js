@@ -1,6 +1,5 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { createRouter, createWebHistory } from 'vue-router'
 import { nextTick } from 'vue'
 
 // Vuetify
@@ -14,11 +13,6 @@ import '@mdi/font/css/materialdesignicons.css'
 // 自定义样式
 import './style.css'
 import App from './App.vue'
-
-// 路由配置
-import HostsEditor from './views/HostsEditor.vue'
-import RemoteHosts from './views/RemoteHosts.vue'
-import Settings from './views/Settings.vue'
 
 // 现代化的亮色和暗色主题
 const lightTheme = {
@@ -111,18 +105,6 @@ const vuetify = createVuetify({
   },
 })
 
-// 创建路由
-const routes = [
-  { path: '/', component: HostsEditor },
-  { path: '/remote', component: RemoteHosts },
-  { path: '/settings', component: Settings },
-]
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes,
-})
-
 // 创建 Pinia 状态管理
 const pinia = createPinia()
 
@@ -131,7 +113,6 @@ const app = createApp(App)
 
 // 注册插件
 app.use(pinia)
-app.use(router)
 app.use(vuetify)
 
 // 挂载应用
