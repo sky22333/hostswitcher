@@ -20,6 +20,31 @@ import (
 	"hostswitcher/backend/models"
 )
 
+// 默认的hosts文件内容常量
+const defaultHostsContent = `# Copyright (c) 1993-2009 Microsoft Corp.
+#
+# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
+#
+# This file contains the mappings of IP addresses to host names. Each
+# entry should be kept on an individual line. The IP address should
+# be placed in the first column followed by the corresponding host name.
+# The IP address and the host name should be separated by at least one
+# space.
+#
+# Additionally, comments (such as these) may be inserted on individual
+# lines or following the machine name denoted by a '#' symbol.
+#
+# For example:
+#
+#      102.54.94.97     rhino.acme.com          # source server
+#       38.25.63.10     x.acme.com              # x client host
+
+# localhost name resolution is handled within DNS itself.
+
+127.0.0.1       localhost
+::1             localhost
+`
+
 // ConfigService 处理 hosts 配置的服务
 type ConfigService struct {
 	ctx          context.Context
@@ -443,33 +468,8 @@ func (s *ConfigService) createDefaultHostsFile(hostsPath string) error {
 		return fmt.Errorf("创建目录失败: %v", err)
 	}
 	
-	// 默认的hosts文件内容
-	defaultContent := `# Copyright (c) 1993-2009 Microsoft Corp.
-#
-# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
-#
-# This file contains the mappings of IP addresses to host names. Each
-# entry should be kept on an individual line. The IP address should
-# be placed in the first column followed by the corresponding host name.
-# The IP address and the host name should be separated by at least one
-# space.
-#
-# Additionally, comments (such as these) may be inserted on individual
-# lines or following the machine name denoted by a '#' symbol.
-#
-# For example:
-#
-#      102.54.94.97     rhino.acme.com          # source server
-#       38.25.63.10     x.acme.com              # x client host
-
-# localhost name resolution is handled within DNS itself.
-
-127.0.0.1       localhost
-::1             localhost
-`
-
 	// 写入文件
-	err := os.WriteFile(hostsPath, []byte(defaultContent), 0644)
+	err := os.WriteFile(hostsPath, []byte(defaultHostsContent), 0644)
 	if err != nil {
 		if s.ctx != nil {
 			wailsRuntime.LogError(s.ctx, fmt.Sprintf("创建默认hosts文件失败: %v", err))
@@ -610,33 +610,8 @@ func (s *ConfigService) UpdateConfigSource(id, source, remoteURL string) error {
 
 // RestoreDefaultHosts 恢复默认的hosts文件
 func (s *ConfigService) RestoreDefaultHosts() error {
-	// 默认的hosts文件内容
-	defaultContent := `# Copyright (c) 1993-2009 Microsoft Corp.
-#
-# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
-#
-# This file contains the mappings of IP addresses to host names. Each
-# entry should be kept on an individual line. The IP address should
-# be placed in the first column followed by the corresponding host name.
-# The IP address and the host name should be separated by at least one
-# space.
-#
-# Additionally, comments (such as these) may be inserted on individual
-# lines or following the machine name denoted by a '#' symbol.
-#
-# For example:
-#
-#      102.54.94.97     rhino.acme.com          # source server
-#       38.25.63.10     x.acme.com              # x client host
-
-# localhost name resolution is handled within DNS itself.
-
-127.0.0.1       localhost
-::1             localhost
-`
-
 	// 写入默认内容
-	err := os.WriteFile(s.systemHosts, []byte(defaultContent), 0644)
+	err := os.WriteFile(s.systemHosts, []byte(defaultHostsContent), 0644)
 	if err != nil {
 		return fmt.Errorf("恢复默认hosts文件失败: %v", err)
 	}

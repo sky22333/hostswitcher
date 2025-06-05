@@ -233,13 +233,6 @@ func (s *TrayService) handleMenuEvents(mShow, mRefreshRemote, mExit *systray.Men
 	}()
 }
 
-// ShowNotification 显示系统通知
-func (s *TrayService) ShowNotification(title, message string) {
-	if s.ctx != nil {
-		wailsRuntime.EventsEmit(s.ctx, "show-notification", title, message)
-	}
-}
-
 // OpenSystemHostsFile 打开系统 hosts 文件
 func (s *TrayService) OpenSystemHostsFile() error {
 	var hostsPath string
