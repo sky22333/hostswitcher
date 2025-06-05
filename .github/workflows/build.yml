@@ -55,19 +55,18 @@ jobs:
 
       - name: 🔨 构建 Windows 应用
         run: |
-          wails build -platform windows/amd64 -clean -upx -ldflags "-s -w -H windowsgui"
+          wails build -platform windows/amd64 -clean -ldflags "-H windowsgui"
 
-      - name: 📦 创建 Windows 压缩包
+      - name: 📦 准备 Windows 构建产物
         run: |
           mkdir -p dist
-          cd build/bin
-          7z a ../../dist/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip HostSwitcher.exe
+          copy build\bin\HostSwitcher.exe dist\HostSwitcher.exe
           
       - name: 📤 上传 Windows 构建产物
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: dist/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip
+          path: dist/HostSwitcher.exe
           retention-days: 1
 
 
@@ -92,7 +91,7 @@ jobs:
       - name: 📋 显示构建产物
         run: |
           echo "📦 构建产物列表:"
-          find artifacts -type f -name "*.zip" -o -name "*.tar.gz" | sort
+          find artifacts -type f -name "*.exe" | sort
 
       - name: 🏷️ 创建 Git 标签
         run: |
@@ -124,7 +123,7 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease }}
           draft: false
           files: |
-            artifacts/windows-build/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip
+            artifacts/windows-build/HostSwitcher.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
