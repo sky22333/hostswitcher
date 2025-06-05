@@ -699,41 +699,16 @@ func (s *ConfigService) FlushDNSCache() error {
 	
 	switch runtime.GOOS {
 	case "windows":
-		// 获取Windows系统目录
+		// 使用固定绝对路径
 		systemRoot := os.Getenv("SystemRoot")
-		if systemRoot == "" {
-			systemRoot = os.Getenv("WINDIR")
-		}
 		if systemRoot == "" {
 			systemRoot = "C:\\Windows"
 		}
 		
-		// 尝试多个可能的ipconfig路径
-		ipConfigPaths := []string{
-			filepath.Join(systemRoot, "System32", "ipconfig.exe"),
-			filepath.Join(systemRoot, "SysWOW64", "ipconfig.exe"),
-			"ipconfig.exe", // 最后尝试相对路径
-		}
-		
-		var ipConfigPath string
-		for _, path := range ipConfigPaths {
-			if _, err := os.Stat(path); err == nil {
-				ipConfigPath = path
-				break
-			}
-		}
-		
-		if ipConfigPath == "" {
-			// 如果找不到ipconfig.exe，尝试直接使用命令名
-			ipConfigPath = "ipconfig"
-		}
-		
+		// 使用固定路径，提高兼容性，避免扫描目录被误报病毒
+		ipConfigPath := filepath.Join(systemRoot, "System32", "ipconfig.exe")
 		cmd = exec.Command(ipConfigPath, "/flushdns")
-		cmdDesc = fmt.Sprintf("%s /flushdns", ipConfigPath)
-		
-		if s.ctx != nil {
-			wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("使用ipconfig路径: %s", ipConfigPath))
-		}
+		cmdDesc = "ipconfig /flushdns"
 		
 	case "darwin":
 		cmd = exec.Command("sudo", "dscacheutil", "-flushcache")
