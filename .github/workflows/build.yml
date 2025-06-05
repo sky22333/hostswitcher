@@ -60,8 +60,9 @@ jobs:
       - name: 📦 创建 Windows 压缩包
         run: |
           mkdir -p dist
-          7z a dist/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip build/bin/HostSwitcher.exe
-
+          cd build/bin
+          7z a ../../dist/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip HostSwitcher.exe
+          
       - name: 📤 上传 Windows 构建产物
         uses: actions/upload-artifact@v4
         with:
