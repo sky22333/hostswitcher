@@ -1,0 +1,134 @@
+name: 🚀 构建和发布
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: '是否为预发布版本'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  GO_VERSION: '1.22'
+  NODE_VERSION: '18'
+  WAILS_VERSION: 'latest'
+
+jobs:
+  # 构建 Windows 版本
+  build-windows:
+    name: 🪟 构建 Windows
+    runs-on: windows-latest
+    steps:
+      - name: 📦 检出代码
+        uses: actions/checkout@v4
+
+      - name: 🔧 设置 Go 环境
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: 🔧 设置 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📥 安装 Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+
+      - name: 📥 安装 Go 依赖
+        run: go mod tidy
+
+      - name: 📥 安装前端依赖
+        working-directory: frontend
+        run: npm ci
+
+      - name: 🔨 构建前端
+        working-directory: frontend
+        run: npm run build
+
+      - name: 🔨 构建 Windows 应用
+        run: |
+          wails build -platform windows/amd64 -clean -upx -ldflags "-X main.version=${{ github.event.inputs.version }}"
+
+      - name: 📦 创建 Windows 压缩包
+        run: |
+          mkdir -p dist
+          7z a dist/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip build/bin/HostSwitcher.exe
+
+      - name: 📤 上传 Windows 构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: dist/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip
+          retention-days: 1
+
+
+  # 创建 Release 并上传所有构建产物
+  create-release:
+    name: 🎉 创建 Release
+    needs: [build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 📦 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📥 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 📋 显示构建产物
+        run: |
+          echo "📦 构建产物列表:"
+          find artifacts -type f -name "*.zip" -o -name "*.tar.gz" | sort
+
+      - name: 🏷️ 创建 Git 标签
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "${{ github.event.inputs.version }}" -m "Release ${{ github.event.inputs.version }}"
+          git push origin "${{ github.event.inputs.version }}"
+
+      - name: 📝 生成更新日志
+        id: changelog
+        run: |
+          # 获取上一个标签
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$PREV_TAG" ]; then
+            echo "从 $PREV_TAG 到 ${{ github.event.inputs.version }} 的更改:" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD >> CHANGELOG.md
+          else
+            echo "🎉 发布 ${{ github.event.inputs.version }}" > CHANGELOG.md
+          fi
+
+      - name: 🎉 创建 GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          name: 🌐 Hosts 管理工具 ${{ github.event.inputs.version }}
+          body_path: CHANGELOG.md
+          prerelease: ${{ github.event.inputs.prerelease }}
+          draft: false
+          files: |
+            artifacts/windows-build/HostSwitcher-windows-amd64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧹 清理构建产物
+        if: always()
+        run: |
+          rm -rf artifacts
+          rm -f CHANGELOG.md
