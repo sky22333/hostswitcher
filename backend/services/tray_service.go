@@ -165,18 +165,17 @@ func (s *TrayService) onReady() {
 	mShow := systray.AddMenuItem("显示主界面", "显示主应用界面")
 	systray.AddSeparator()
 	
-	mRestoreDefault := systray.AddMenuItem("恢复默认", "恢复默认系统 hosts 文件")
 	mRefreshRemote := systray.AddMenuItem("更新远程源", "更新所有远程 hosts 源")
 	
 	systray.AddSeparator()
 	mExit := systray.AddMenuItem("退出", "退出应用")
 	
 	// 处理菜单事件
-	go s.handleMenuEvents(mShow, mRestoreDefault, mRefreshRemote, mExit)
+	go s.handleMenuEvents(mShow, mRefreshRemote, mExit)
 }
 
 // handleMenuEvents 处理菜单事件
-func (s *TrayService) handleMenuEvents(mShow, mRestoreDefault, mRefreshRemote, mExit *systray.MenuItem) {
+func (s *TrayService) handleMenuEvents(mShow, mRefreshRemote, mExit *systray.MenuItem) {
 	defer func() {
 		if r := recover(); r != nil {
 			if s.ctx != nil {
@@ -198,20 +197,6 @@ func (s *TrayService) handleMenuEvents(mShow, mRestoreDefault, mRefreshRemote, m
 					wailsRuntime.WindowUnminimise(s.ctx)
 					wailsRuntime.WindowSetAlwaysOnTop(s.ctx, false)
 					wailsRuntime.WindowCenter(s.ctx)
-				}
-			}
-		}
-	}()
-	
-	go func() {
-		for {
-			select {
-			case <-s.stopChan:
-				return
-			case <-mRestoreDefault.ClickedCh:
-				// 恢复默认hosts文件
-				if s.ctx != nil {
-					wailsRuntime.EventsEmit(s.ctx, "tray-restore-default")
 				}
 			}
 		}

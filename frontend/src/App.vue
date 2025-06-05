@@ -179,15 +179,7 @@ onMounted(async () => {
         }
       });
       
-      // 监听托盘恢复默认事件
-      window.runtime.EventsOn('tray-restore-default', () => {
-        console.log('托盘请求恢复默认hosts文件');
-        configStore.restoreDefaultHosts().then(() => {
-          notificationStore.showNotification('hosts文件已恢复为默认', 'success');
-        }).catch((error) => {
-          notificationStore.showNotification('恢复默认失败: ' + error.message, 'error');
-        });
-      });
+
     }
     
     console.log('主应用初始化完成');

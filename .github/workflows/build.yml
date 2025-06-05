@@ -60,7 +60,7 @@ jobs:
       - name: 📦 创建 Windows 压缩包
         run: |
           mkdir -p dist
-          7z a dist/HostSwitcher-windows-amd64.zip build/bin/HostSwitcher.exe
+          7z a dist/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip build/bin/HostSwitcher.exe
 
       - name: 📤 上传 Windows 构建产物
         uses: actions/upload-artifact@v4
@@ -123,7 +123,7 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease }}
           draft: false
           files: |
-            artifacts/windows-build/HostSwitcher-windows-amd64.zip
+            artifacts/windows-build/HostSwitcher-${{ github.event.inputs.version }}-windows-amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
