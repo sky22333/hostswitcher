@@ -205,21 +205,7 @@ export const useConfigStore = defineStore('config', () => {
     }
   }
 
-  /**
-   * 使用ANSI编码写入系统hosts文件
-   * @param {string} content - hosts文件内容
-   */
-  async function writeSystemHostsWithANSI(content) {
-    loading.value = true;
-    try {
-      await window.go.services.ConfigService.WriteSystemHostsWithANSI(content);
-    } catch (error) {
-      console.error('使用ANSI编码写入系统hosts文件失败:', error);
-      throw error;
-    } finally {
-      loading.value = false;
-    }
-  }
+
 
   /**
    * 刷新系统DNS缓存
@@ -247,7 +233,6 @@ export const useConfigStore = defineStore('config', () => {
     applyConfig,
     readSystemHosts,
     writeSystemHosts,
-    writeSystemHostsWithANSI,
     validateHostsContent,
     isAdminRequired,
     isAdminMode,

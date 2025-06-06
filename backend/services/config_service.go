@@ -12,10 +12,11 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/google/uuid"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
-	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/sys/windows"
 
 	"hostswitcher/backend/models"
 )
@@ -487,42 +488,64 @@ func (s *ConfigService) createDefaultHostsFile(hostsPath string) error {
 // IsAdminRequired 检查是否需要管理员权限
 func (s *ConfigService) IsAdminRequired() bool {
 	if s.ctx != nil {
-		wailsRuntime.LogInfo(s.ctx, "开始检查管理员权限...")
+		wailsRuntime.LogInfo(s.ctx, "检查管理员权限...")
 	}
 	
-	// 在Windows上修改系统hosts文件通常需要管理员权限
+	// 只在Windows上需要检查管理员权限
 	if GetOSType() == "windows" {
-		// 尝试写入测试，检查是否有权限
-		testFile := s.systemHosts + ".test"
+		// 使用Windows标准API检查进程提升状态
+		elevated := s.isProcessElevated()
 		
 		if s.ctx != nil {
-			wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("尝试创建测试文件: %s", testFile))
-		}
-		
-		err := os.WriteFile(testFile, []byte("test"), 0644)
-		if err != nil {
-			if s.ctx != nil {
-				wailsRuntime.LogWarning(s.ctx, fmt.Sprintf("创建测试文件失败: %v，需要管理员权限", err))
+			if elevated {
+				wailsRuntime.LogInfo(s.ctx, "检测到管理员权限")
+			} else {
+				wailsRuntime.LogWarning(s.ctx, "需要管理员权限")
 			}
-			return true
 		}
 		
-		// 清理测试文件
-		removeErr := os.Remove(testFile)
-		if removeErr != nil && s.ctx != nil {
-			wailsRuntime.LogWarning(s.ctx, fmt.Sprintf("删除测试文件失败: %v", removeErr))
-		}
-		
-		if s.ctx != nil {
-			wailsRuntime.LogInfo(s.ctx, "权限检查通过，有足够权限修改hosts文件")
-		}
-		return false
+		return !elevated
 	}
 	
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, "非Windows系统，不需要管理员权限")
 	}
 	return false
+}
+
+// 使用Windows标准API检查进程是否已提升权限
+func (s *ConfigService) isProcessElevated() bool {
+	// 获取当前进程token（Windows Vista+标准方式）
+	var token windows.Token
+	err := windows.OpenProcessToken(windows.CurrentProcess(), windows.TOKEN_QUERY, &token)
+	if err != nil {
+		if s.ctx != nil {
+			wailsRuntime.LogError(s.ctx, fmt.Sprintf("无法获取进程token: %v", err))
+		}
+		return false
+	}
+	defer token.Close()
+	
+	// 查询token提升状态（官方推荐方式）
+	var isElevated uint32
+	var returnedLen uint32
+	
+	err = windows.GetTokenInformation(
+		token,
+		windows.TokenElevation,
+		(*byte)(unsafe.Pointer(&isElevated)),
+		uint32(unsafe.Sizeof(isElevated)),
+		&returnedLen,
+	)
+	
+	if err != nil {
+		if s.ctx != nil {
+			wailsRuntime.LogError(s.ctx, fmt.Sprintf("无法查询token信息: %v", err))
+		}
+		return false
+	}
+	
+	return isElevated != 0
 }
 
 // ValidateHostsContent 验证hosts文件内容格式
@@ -634,38 +657,7 @@ func (s *ConfigService) RestoreDefaultHosts() error {
 	return nil
 }
 
-// WriteSystemHostsWithANSI 以ANSI编码写入系统hosts文件，提高兼容性
-func (s *ConfigService) WriteSystemHostsWithANSI(content string) error {
-	// 验证内容
-	if err := s.ValidateHostsContent(content); err != nil {
-		return fmt.Errorf("内容验证失败: %v", err)
-	}
-	
-	// 转换为ANSI编码 (GBK)
-	encoder := simplifiedchinese.GBK.NewEncoder()
-	ansiContent, err := encoder.String(content)
-	if err != nil {
-		// 如果转换失败，使用原始内容
-		if s.ctx != nil {
-			wailsRuntime.LogWarning(s.ctx, fmt.Sprintf("ANSI编码转换失败，使用原始内容: %v", err))
-		}
-		ansiContent = content
-	}
-	
-	// 写入文件
-	err = os.WriteFile(s.systemHosts, []byte(ansiContent), 0644)
-	if err != nil {
-		return fmt.Errorf("写入失败: %v", err)
-	}
-	
-	// 发出系统hosts更新事件
-	if s.ctx != nil {
-		wailsRuntime.EventsEmit(s.ctx, "system-hosts-updated")
-		wailsRuntime.LogInfo(s.ctx, "已使用ANSI编码保存hosts文件")
-	}
-	
-	return nil
-}
+
 
 // FlushDNSCache 刷新系统DNS缓存
 // 使用Windows API实现，兼容Win10及以上版本
@@ -692,7 +684,6 @@ func (s *ConfigService) FlushDNSCache() error {
 }
 
 // flushDNSResolverCache 调用Windows API DnsFlushResolverCache清理DNS缓存
-// 这是一个现代化的实现，避免创建新进程，避免报毒问题
 func flushDNSResolverCache() error {
 	// 加载dnsapi.dll
 	dnsapi, err := syscall.LoadLibrary("dnsapi.dll")
@@ -708,10 +699,8 @@ func flushDNSResolverCache() error {
 	}
 	
 	// 调用DnsFlushResolverCache函数
-	// 该函数无参数，无返回值，调用成功即表示DNS缓存已清理
 	_, _, callErr := syscall.Syscall(proc, 0, 0, 0, 0)
 	
-	// 对于DnsFlushResolverCache，只要syscall调用没有异常就认为成功
 	// 因为该API没有返回值，Windows文档说明该函数总是成功的
 	if callErr != 0 {
 		// 如果有系统调用错误，将其转换为Go错误

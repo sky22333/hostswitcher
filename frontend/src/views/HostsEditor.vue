@@ -110,24 +110,7 @@
                     <span>验证内容格式，检查hosts文件语法。</span>
                   </v-tooltip>
                   
-                  <v-tooltip location="bottom">
-                    <template #activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        icon
-                        variant="text"
-                        size="small"
-                        @click="saveContentWithANSI"
-                        :loading="savingAnsi"
-                        :disabled="!hasChanges || saving || savingAnsi || restoring || flushing"
-                        class="icon-btn success-btn"
-                      >
-                        <v-icon>mdi-content-save-settings</v-icon>
-                      </v-btn>
-                    </template>
-                    <span>保存为ANSI编码，仅在默认的保存不生效的情况下使用。</span>
-                  </v-tooltip>
-                  
+
                   <v-tooltip location="bottom">
                     <template #activator="{ props }">
                       <v-btn
@@ -137,7 +120,7 @@
                         size="small"
                         @click="saveContent"
                         :loading="saving"
-                        :disabled="!hasChanges || saving || savingAnsi || restoring || flushing"
+                        :disabled="!hasChanges || saving || restoring || flushing"
                         class="icon-btn primary-btn"
                       >
                         <v-icon>mdi-content-save</v-icon>
@@ -358,7 +341,6 @@ const originalContent = ref('');
 const selectedConfigId = ref('system');
 const loading = ref(false);
 const saving = ref(false);
-const savingAnsi = ref(false);
 const flushing = ref(false);
 const showUnsavedDialog = ref(false);
 const showPermissionDialog = ref(false);
@@ -628,52 +610,6 @@ const confirmRestoreDefault = async () => {
   await restoreDefault();
 };
 
-// ANSI编码保存方法
-const saveContentWithANSI = async () => {
-  if (!hasChanges.value) {
-    return;
-  }
-  
-  savingAnsi.value = true;
-  try {
-    if (selectedConfigId.value === 'system') {
-      // 检查管理员权限
-      if (needsAdmin.value) {
-        showPermissionDialog.value = true;
-        return;
-      }
-      
-      // 验证内容
-      await configStore.validateHostsContent(editorContent.value);
-      
-      // 使用ANSI编码保存到系统hosts文件
-      await configStore.writeSystemHostsWithANSI(editorContent.value);
-      
-      originalContent.value = editorContent.value;
-      notificationStore.showNotification('系统 hosts 文件已使用ANSI编码保存，提高兼容性', 'success');
-    } else {
-      // 对于配置文件，使用普通保存方式
-      const config = selectedConfig.value;
-      if (config) {
-        await configStore.updateConfig(
-          config.ID,
-          config.Name,
-          config.Description,
-          editorContent.value
-        );
-        originalContent.value = editorContent.value;
-        notificationStore.showNotification('配置已保存', 'success');
-      } else {
-        console.error('找不到要保存的配置');
-      }
-    }
-  } catch (error) {
-    console.error('ANSI保存失败:', error);
-    notificationStore.showNotification('ANSI保存失败: ' + error.message, 'error');
-  } finally {
-    savingAnsi.value = false;
-  }
-};
 
 // DNS缓存刷新方法
 const flushDNSCache = async () => {
