@@ -52,7 +52,6 @@ type ConfigService struct {
 	configs       []*models.Config
 	activeConfig  *models.Config
 	appDir        string
-	configsDir    string
 	systemHosts   string
 	backupService *BackupService
 }
@@ -68,10 +67,9 @@ func NewConfigService(ctx context.Context) *ConfigService {
 
 	// 创建应用目录
 	appDir := filepath.Join(homeDir, ".hosts-manager")
-	configsDir := filepath.Join(appDir, "configs")
 
 	// 创建必要的目录
-	os.MkdirAll(configsDir, 0755)
+	os.MkdirAll(appDir, 0755)
 
 	// 获取系统hosts文件路径
 	var systemHosts string
@@ -96,7 +94,6 @@ func NewConfigService(ctx context.Context) *ConfigService {
 	service := &ConfigService{
 		ctx:           ctx,
 		appDir:        appDir,
-		configsDir:    configsDir,
 		systemHosts:   systemHosts,
 		configs:       []*models.Config{},
 		backupService: backupService,
