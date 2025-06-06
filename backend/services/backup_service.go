@@ -46,7 +46,7 @@ func NewBackupService(appDir string) *BackupService {
 		appDir:     appDir,
 		backupDir:  backupDir,
 		backupFile: backupFile,
-		maxBackups: 10, // 最多保留10个自动备份
+		maxBackups: 99, // 最多保留99个自动备份
 	}
 }
 
@@ -348,4 +348,33 @@ func (s *BackupService) GetBackupStats() (map[string]interface{}, error) {
 	}
 
 	return stats, nil
+}
+
+// ClearAllAutoBackups 清理所有自动备份
+func (s *BackupService) ClearAllAutoBackups() error {
+	backups, err := s.loadBackups()
+	if err != nil {
+		return err
+	}
+
+	// 只保留手动备份
+	var manualBackups []*models.Backup
+	for _, backup := range backups {
+		if !backup.IsAutomatic {
+			manualBackups = append(manualBackups, backup)
+		}
+	}
+
+	// 保存更新后的备份列表
+	err = s.saveBackups(manualBackups)
+	if err != nil {
+		return err
+	}
+
+	// 发出事件通知
+	if s.ctx != nil {
+		wailsRuntime.EventsEmit(s.ctx, "backup-list-changed")
+	}
+
+	return nil
 } 

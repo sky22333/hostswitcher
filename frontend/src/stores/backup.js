@@ -203,6 +203,22 @@ export const useBackupStore = defineStore('backup', () => {
   }
 
   /**
+   * 清理所有自动备份
+   */
+  async function clearAllAutoBackups() {
+    loading.value = true;
+    try {
+      await window.go.services.ConfigService.ClearAllAutoBackups();
+      await loadBackups(); // 重新加载备份列表
+    } catch (error) {
+      console.error('清理自动备份失败:', error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
    * 获取备份内容预览
    */
   function getBackupPreview(content, maxLines = 10) {
@@ -237,6 +253,7 @@ export const useBackupStore = defineStore('backup', () => {
     restoreBackup,
     deleteBackup,
     updateBackupTags,
-    updateBackupDescription
+    updateBackupDescription,
+    clearAllAutoBackups
   };
 }); 

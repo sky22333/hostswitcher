@@ -811,6 +811,14 @@ func (s *ConfigService) GetBackupStats() (map[string]interface{}, error) {
 	return s.backupService.GetBackupStats()
 }
 
+// ClearAllAutoBackups 清理所有自动备份
+func (s *ConfigService) ClearAllAutoBackups() error {
+	if s.backupService == nil {
+		return fmt.Errorf("备份服务未初始化")
+	}
+	return s.backupService.ClearAllAutoBackups()
+}
+
 // flushDNSResolverCache 调用Windows API DnsFlushResolverCache清理DNS缓存
 func flushDNSResolverCache() error {
 	// 加载dnsapi.dll
