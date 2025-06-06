@@ -81,6 +81,7 @@
           <Transition name="page" mode="out-in">
             <HostsEditor v-if="activeTab === 'editor'" key="editor" />
             <RemoteHosts v-else-if="activeTab === 'remote'" key="remote" />
+            <BackupManager v-else-if="activeTab === 'backup'" key="backup" />
             <Settings v-else-if="activeTab === 'settings'" key="settings" />
           </Transition>
         </div>
@@ -100,6 +101,7 @@ import { useNotificationStore } from '@/stores/notification';
 // 组件导入
 import HostsEditor from '@/views/HostsEditor.vue';
 import RemoteHosts from '@/views/RemoteHosts.vue';
+import BackupManager from '@/views/BackupManager.vue';
 import Settings from '@/views/Settings.vue';
 import NotificationSystem from '@/components/NotificationSystem.vue';
 
@@ -128,6 +130,11 @@ const menuItems = ref([
     title: '远程源管理',
     icon: 'mdi-cloud-download',
     value: 'remote'
+  },
+  {
+    title: '备份管理',
+    icon: 'mdi-database-backup',
+    value: 'backup'
   },
   {
     title: '设置',

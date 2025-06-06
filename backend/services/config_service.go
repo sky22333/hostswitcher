@@ -48,12 +48,13 @@ const defaultHostsContent = `# Copyright (c) 1993-2009 Microsoft Corp.
 
 // ConfigService 处理 hosts 配置的服务
 type ConfigService struct {
-	ctx          context.Context
-	configs      []*models.Config
-	activeConfig *models.Config
-	appDir       string
-	configsDir   string
-	systemHosts  string
+	ctx           context.Context
+	configs       []*models.Config
+	activeConfig  *models.Config
+	appDir        string
+	configsDir    string
+	systemHosts   string
+	backupService *BackupService
 }
 
 // NewConfigService 创建一个新的配置服务实例
@@ -88,12 +89,17 @@ func NewConfigService(ctx context.Context) *ConfigService {
 		log.Printf("系统hosts文件不存在: %s", systemHosts)
 	}
 
+	// 创建备份服务
+	backupService := NewBackupService(appDir)
+	backupService.SetContext(ctx)
+
 	service := &ConfigService{
-		ctx:         ctx,
-		appDir:      appDir,
-		configsDir:  configsDir,
-		systemHosts: systemHosts,
-		configs:     []*models.Config{},
+		ctx:           ctx,
+		appDir:        appDir,
+		configsDir:    configsDir,
+		systemHosts:   systemHosts,
+		configs:       []*models.Config{},
+		backupService: backupService,
 	}
 
 	return service
@@ -322,6 +328,9 @@ func (s *ConfigService) ApplyConfig(id string) error {
 		return fmt.Errorf("读取当前系统hosts失败: %v", err)
 	}
 	
+	// 在应用配置前创建自动备份
+	s.backupService.CreateBackup(string(currentContent), fmt.Sprintf("应用配置 '%s' 前的自动备份", config.Name), true, []string{"auto", "apply", config.Name})
+	
 	// 验证配置内容
 	if err := s.ValidateHostsContent(config.Content); err != nil {
 		return fmt.Errorf("配置内容验证失败: %v", err)
@@ -403,6 +412,11 @@ func (s *ConfigService) WriteSystemHosts(content string) error {
 	// 验证内容
 	if err := s.ValidateHostsContent(content); err != nil {
 		return fmt.Errorf("内容验证失败: %v", err)
+	}
+	
+	// 在修改前创建自动备份
+	if currentContent, err := s.ReadSystemHosts(); err == nil {
+		s.backupService.CreateBackup(currentContent, "系统hosts文件自动备份", true, []string{"auto", "system"})
 	}
 	
 	// 写入文件
@@ -681,6 +695,64 @@ func (s *ConfigService) FlushDNSCache() error {
 	}
 	
 	return nil
+}
+
+// 备份相关方法
+
+// GetAllBackups 获取所有备份
+func (s *ConfigService) GetAllBackups() ([]*models.Backup, error) {
+	return s.backupService.GetAllBackups()
+}
+
+// CreateManualBackup 创建手动备份
+func (s *ConfigService) CreateManualBackup(description string, tags []string) (*models.Backup, error) {
+	// 读取当前系统hosts内容
+	content, err := s.ReadSystemHosts()
+	if err != nil {
+		return nil, fmt.Errorf("读取系统hosts失败: %v", err)
+	}
+	
+	if description == "" {
+		description = "手动备份"
+	}
+	
+	return s.backupService.CreateBackup(content, description, false, tags)
+}
+
+// RestoreFromBackup 从备份恢复
+func (s *ConfigService) RestoreFromBackup(backupID string) error {
+	content, err := s.backupService.RestoreBackup(backupID)
+	if err != nil {
+		return err
+	}
+	
+	// 在恢复前创建自动备份
+	if currentContent, readErr := s.ReadSystemHosts(); readErr == nil {
+		s.backupService.CreateBackup(currentContent, "恢复备份前的自动备份", true, []string{"auto", "restore"})
+	}
+	
+	// 写入恢复的内容
+	return s.WriteSystemHosts(content)
+}
+
+// DeleteBackup 删除备份
+func (s *ConfigService) DeleteBackup(backupID string) error {
+	return s.backupService.DeleteBackup(backupID)
+}
+
+// UpdateBackupTags 更新备份标签
+func (s *ConfigService) UpdateBackupTags(backupID string, tags []string) error {
+	return s.backupService.UpdateBackupTags(backupID, tags)
+}
+
+// UpdateBackupDescription 更新备份描述
+func (s *ConfigService) UpdateBackupDescription(backupID, description string) error {
+	return s.backupService.UpdateBackupDescription(backupID, description)
+}
+
+// GetBackupStats 获取备份统计信息
+func (s *ConfigService) GetBackupStats() (map[string]interface{}, error) {
+	return s.backupService.GetBackupStats()
 }
 
 // flushDNSResolverCache 调用Windows API DnsFlushResolverCache清理DNS缓存

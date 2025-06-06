@@ -83,3 +83,20 @@ func (jt *JSONTime) UnmarshalJSON(data []byte) error {
 func GetCurrentTimeRFC3339() JSONTime {
 	return JSONTime{Time: time.Now()}
 }
+
+// Backup 表示一个备份记录
+type Backup struct {
+	ID          string   `json:"id"`
+	Timestamp   JSONTime `json:"timestamp"`
+	Description string   `json:"description"`
+	Content     string   `json:"content"`
+	Size        int64    `json:"size"`
+	IsAutomatic bool     `json:"isAutomatic"`
+	Tags        []string `json:"tags,omitempty"`
+	Hash        string   `json:"hash"` // 内容哈希，用于去重
+}
+
+// BackupList 备份列表的包装器，便于序列化
+type BackupList struct {
+	Backups []*Backup `json:"backups"`
+}
