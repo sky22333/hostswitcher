@@ -127,14 +127,14 @@
       </v-card>
 
       <!-- 备份列表 -->
-      <v-card elevation="0" rounded="lg">
+      <v-card elevation="0" rounded="lg" class="backup-list-container">
         <v-card-text class="pa-0">
-          <div v-if="backupStore.loading && backupStore.sortedBackups.length === 0" class="text-center pa-8">
+          <div v-if="backupStore.loading && backupStore.sortedBackups.length === 0" class="text-center pa-8 empty-state">
             <v-progress-circular indeterminate color="primary" size="48" class="mb-4"></v-progress-circular>
             <div class="text-body-1 text-medium-emphasis">加载备份中...</div>
           </div>
 
-          <div v-else-if="filteredBackups.length === 0" class="text-center pa-8">
+          <div v-else-if="filteredBackups.length === 0" class="text-center pa-8 empty-state">
             <v-icon size="64" color="medium-emphasis" class="mb-4">mdi-database-off</v-icon>
             <div class="text-h6 mb-2">{{ getEmptyMessage() }}</div>
             <div class="text-body-2 text-medium-emphasis mb-4">{{ getEmptySubMessage() }}</div>
@@ -301,15 +301,15 @@
           <div class="mb-3">
             <div class="text-subtitle-2 mb-2">备份内容</div>
             <v-radio-group v-model="backupContentType" inline>
-              <v-radio label="使用当前系统hosts" value="system"></v-radio>
-              <v-radio label="自定义内容" value="custom"></v-radio>
+              <v-radio label="备份当前系统hosts" value="system"></v-radio>
+              <v-radio label="备份自定义内容" value="custom"></v-radio>
             </v-radio-group>
           </div>
 
           <v-textarea
             v-if="backupContentType === 'custom'"
             v-model="newBackupContent"
-            label="自定义备份内容"
+            label="备份自定义的hosts内容"
             placeholder="输入自定义hosts文件内容"
             rows="10"
             auto-grow
@@ -766,18 +766,27 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
-.stats-card {
-  transition: transform 0.2s ease;
+.backup-list-container {
+  min-height: 400px;
+  transition: height 0.3s ease;
 }
 
-.stats-card:hover {
-  transform: translateY(-2px);
+.empty-state {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stats-card {
+  transition: box-shadow 0.2s ease;
 }
 
 .backup-timeline-container {
-  max-height: 600px;
+  min-height: 200px;
+  max-height: calc(100vh - 300px);
   overflow-y: auto;
-  padding: 8px 8px 16px 0;
+  padding: 8px 8px 24px 0;
 }
 
 .backup-timeline-container::-webkit-scrollbar {
@@ -799,15 +808,14 @@ onMounted(async () => {
 }
 
 .backup-timeline {
-  padding: 16px;
+  padding: 16px 16px 32px 16px;
 }
 
 .backup-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease;
 }
 
 .backup-card:hover {
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
@@ -829,12 +837,11 @@ onMounted(async () => {
 
 .backup-preview.clickable {
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .backup-preview.clickable:hover {
   background: rgba(var(--v-theme-surface-variant), 0.5);
-  transform: translateY(-1px);
 }
 
 .backup-preview.compact {
@@ -872,26 +879,16 @@ onMounted(async () => {
   overflow-y: auto;
 }
 
-.icon-btn {
-  transition: transform 0.2s ease;
-}
-
-.icon-btn:hover {
-  transform: scale(1.1);
-}
-
 .clickable-card {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: box-shadow 0.2s ease;
 }
 
 .clickable-card:hover {
-  transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
 }
 
 .clickable-card.active-filter {
-  transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
   border: 2px solid rgba(var(--v-theme-surface), 0.3);
 }

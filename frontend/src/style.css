@@ -60,10 +60,6 @@ html, body, #app {
   transition: var(--app-transition);
 }
 
-.app-card:hover {
-  transform: translateY(-1px);
-}
-
 .app-glass {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
