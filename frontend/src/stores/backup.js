@@ -63,6 +63,11 @@ export const useBackupStore = defineStore('backup', () => {
    * 加载所有备份
    */
   async function loadBackups() {
+    if (!window.go || !window.go.services || !window.go.services.ConfigService) {
+      console.warn('Go 后端服务尚未准备好');
+      return;
+    }
+    
     loading.value = true;
     try {
       const result = await window.go.services.ConfigService.GetAllBackups();
@@ -70,6 +75,14 @@ export const useBackupStore = defineStore('backup', () => {
       await loadStats();
     } catch (error) {
       console.error('加载备份失败:', error);
+      // 重置为默认值而不是抛出错误
+      backups.value = [];
+      stats.value = {
+        total: 0,
+        automatic: 0,
+        manual: 0,
+        totalSize: 0
+      };
       throw error;
     } finally {
       loading.value = false;

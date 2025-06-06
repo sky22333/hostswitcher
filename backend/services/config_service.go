@@ -114,6 +114,10 @@ func GetOSType() string {
 // wails:ignore
 func (s *ConfigService) SetContext(ctx context.Context) {
 	s.ctx = ctx
+	// 同时更新备份服务的上下文
+	if s.backupService != nil {
+		s.backupService.SetContext(ctx)
+	}
 }
 
 // Initialize 初始化服务
@@ -329,7 +333,9 @@ func (s *ConfigService) ApplyConfig(id string) error {
 	}
 	
 	// 在应用配置前创建自动备份
-	s.backupService.CreateBackup(string(currentContent), fmt.Sprintf("应用配置 '%s' 前的自动备份", config.Name), true, []string{"auto", "apply", config.Name})
+	if s.backupService != nil {
+		s.backupService.CreateBackup(string(currentContent), fmt.Sprintf("应用配置 '%s' 前的自动备份", config.Name), true, []string{"auto", "apply", config.Name})
+	}
 	
 	// 验证配置内容
 	if err := s.ValidateHostsContent(config.Content); err != nil {
@@ -415,8 +421,10 @@ func (s *ConfigService) WriteSystemHosts(content string) error {
 	}
 	
 	// 在修改前创建自动备份
-	if currentContent, err := s.ReadSystemHosts(); err == nil {
-		s.backupService.CreateBackup(currentContent, "系统hosts文件自动备份", true, []string{"auto", "system"})
+	if s.backupService != nil {
+		if currentContent, err := s.ReadSystemHosts(); err == nil {
+			s.backupService.CreateBackup(currentContent, "系统hosts文件自动备份", true, []string{"auto", "system"})
+		}
 	}
 	
 	// 写入文件
@@ -701,11 +709,18 @@ func (s *ConfigService) FlushDNSCache() error {
 
 // GetAllBackups 获取所有备份
 func (s *ConfigService) GetAllBackups() ([]*models.Backup, error) {
+	if s.backupService == nil {
+		return []*models.Backup{}, nil
+	}
 	return s.backupService.GetAllBackups()
 }
 
 // CreateManualBackup 创建手动备份
 func (s *ConfigService) CreateManualBackup(description string, tags []string) (*models.Backup, error) {
+	if s.backupService == nil {
+		return nil, fmt.Errorf("备份服务未初始化")
+	}
+	
 	// 读取当前系统hosts内容
 	content, err := s.ReadSystemHosts()
 	if err != nil {
@@ -721,6 +736,10 @@ func (s *ConfigService) CreateManualBackup(description string, tags []string) (*
 
 // RestoreFromBackup 从备份恢复
 func (s *ConfigService) RestoreFromBackup(backupID string) error {
+	if s.backupService == nil {
+		return fmt.Errorf("备份服务未初始化")
+	}
+	
 	content, err := s.backupService.RestoreBackup(backupID)
 	if err != nil {
 		return err
@@ -737,21 +756,38 @@ func (s *ConfigService) RestoreFromBackup(backupID string) error {
 
 // DeleteBackup 删除备份
 func (s *ConfigService) DeleteBackup(backupID string) error {
+	if s.backupService == nil {
+		return fmt.Errorf("备份服务未初始化")
+	}
 	return s.backupService.DeleteBackup(backupID)
 }
 
 // UpdateBackupTags 更新备份标签
 func (s *ConfigService) UpdateBackupTags(backupID string, tags []string) error {
+	if s.backupService == nil {
+		return fmt.Errorf("备份服务未初始化")
+	}
 	return s.backupService.UpdateBackupTags(backupID, tags)
 }
 
 // UpdateBackupDescription 更新备份描述
 func (s *ConfigService) UpdateBackupDescription(backupID, description string) error {
+	if s.backupService == nil {
+		return fmt.Errorf("备份服务未初始化")
+	}
 	return s.backupService.UpdateBackupDescription(backupID, description)
 }
 
 // GetBackupStats 获取备份统计信息
 func (s *ConfigService) GetBackupStats() (map[string]interface{}, error) {
+	if s.backupService == nil {
+		return map[string]interface{}{
+			"total":     0,
+			"automatic": 0,
+			"manual":    0,
+			"totalSize": int64(0),
+		}, nil
+	}
 	return s.backupService.GetBackupStats()
 }
 

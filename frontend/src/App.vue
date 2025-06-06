@@ -133,7 +133,7 @@ const menuItems = ref([
   },
   {
     title: '备份管理',
-    icon: 'mdi-database-backup',
+    icon: 'mdi-backup-restore',
     value: 'backup'
   },
   {

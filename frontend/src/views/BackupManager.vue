@@ -451,14 +451,23 @@ const deleting = ref(false);
 // 计算属性
 const formatTimestamp = computed(() => {
   return (timestamp) => {
-    return new Date(timestamp).toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        return '无效时间';
+      }
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (error) {
+      console.error('时间格式化错误:', error);
+      return '时间格式错误';
+    }
   };
 });
 
@@ -559,7 +568,27 @@ const deleteBackup = async () => {
 
 // 生命周期
 onMounted(async () => {
-  await refreshBackups();
+  // 确保 Go 后端已经准备好
+  if (window.go && window.go.services && window.go.services.ConfigService) {
+    try {
+      await refreshBackups();
+    } catch (error) {
+      console.error('初始化备份数据失败:', error);
+      notificationStore.showNotification('初始化备份数据失败: ' + error.message, 'error');
+    }
+  } else {
+    console.warn('Go 后端服务尚未准备好，延迟加载备份数据');
+    // 延迟尝试
+    setTimeout(async () => {
+      if (window.go && window.go.services && window.go.services.ConfigService) {
+        try {
+          await refreshBackups();
+        } catch (error) {
+          console.error('延迟加载备份数据失败:', error);
+        }
+      }
+    }, 1000);
+  }
 });
 </script>
 

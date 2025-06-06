@@ -31,8 +31,16 @@ func NewBackupService(appDir string) *BackupService {
 	backupDir := filepath.Join(appDir, "backups")
 	backupFile := filepath.Join(appDir, "backups.json")
 	
-	// 创建备份目录
-	os.MkdirAll(backupDir, 0755)
+	// 创建应用目录和备份目录
+	err := os.MkdirAll(appDir, 0755)
+	if err != nil {
+		fmt.Printf("创建应用目录失败: %v\n", err)
+	}
+	
+	err = os.MkdirAll(backupDir, 0755)
+	if err != nil {
+		fmt.Printf("创建备份目录失败: %v\n", err)
+	}
 
 	return &BackupService{
 		appDir:     appDir,
