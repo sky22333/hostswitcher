@@ -81,7 +81,7 @@
                 <v-btn
                   icon
                   variant="text"
-                  @click="refreshBackups"
+                  @click="refreshBackupsSilently"
                   :loading="backupStore.loading"
                   :disabled="backupStore.loading"
                   class="icon-btn"
@@ -116,114 +116,119 @@
             </v-btn>
           </div>
 
-          <!-- 备份时间线 -->
-          <v-timeline v-else side="end" class="backup-timeline">
-            <v-timeline-item
-              v-for="backup in backupStore.sortedBackups"
-              :key="backup.id"
-              size="small"
-              :dot-color="backup.isAutomatic ? 'success' : 'primary'"
-              :icon="backup.isAutomatic ? 'mdi-robot' : 'mdi-account'"
-              class="backup-item"
-            >
-              <template v-slot:opposite>
-                <div class="text-caption text-medium-emphasis">
-                  {{ formatTimestamp(backup.timestamp) }}
-                </div>
-              </template>
+          <!-- 备份时间线 - 添加滚动容器 -->
+          <div v-else class="backup-timeline-container">
+            <v-timeline side="end" class="backup-timeline">
+              <v-timeline-item
+                v-for="backup in backupStore.sortedBackups"
+                :key="backup.id"
+                size="small"
+                :dot-color="backup.isAutomatic ? 'success' : 'primary'"
+                :icon="backup.isAutomatic ? 'mdi-robot' : 'mdi-account'"
+                class="backup-item"
+              >
+                <template v-slot:opposite>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ formatTimestamp(backup.timestamp) }}
+                  </div>
+                </template>
 
-              <v-card class="backup-card" elevation="2" rounded="lg">
-                <v-card-text class="pa-4">
-                  <!-- 备份头部信息 -->
-                  <div class="d-flex align-center mb-3">
-                    <div class="flex-1">
-                      <div class="d-flex align-center mb-1">
-                        <span class="text-subtitle-1 font-weight-medium me-2">{{ backup.description }}</span>
-                        <v-chip
-                          :color="backup.isAutomatic ? 'success' : 'primary'"
-                          size="x-small"
-                          variant="flat"
+                <v-card class="backup-card" elevation="2" rounded="lg">
+                  <v-card-text class="pa-4">
+                    <!-- 备份头部信息 -->
+                    <div class="d-flex align-center mb-3">
+                      <div class="flex-1">
+                        <div class="d-flex align-center mb-1">
+                          <span class="text-subtitle-1 font-weight-medium me-2">{{ backup.description }}</span>
+                          <v-chip
+                            :color="backup.isAutomatic ? 'success' : 'primary'"
+                            size="x-small"
+                            variant="flat"
+                          >
+                            {{ backup.isAutomatic ? '自动' : '手动' }}
+                          </v-chip>
+                        </div>
+                        <div class="text-caption text-medium-emphasis">
+                          {{ backupStore.formatRelativeTime(backup.timestamp) }} • {{ backupStore.formatFileSize(backup.size) }}
+                        </div>
+                      </div>
+                      <div class="d-flex align-center gap-1">
+                        <v-btn
+                          icon
+                          size="small"
+                          variant="text"
+                          @click="showPreviewDialog(backup)"
+                          title="预览内容"
                         >
-                          {{ backup.isAutomatic ? '自动' : '手动' }}
-                        </v-chip>
-                      </div>
-                      <div class="text-caption text-medium-emphasis">
-                        {{ backupStore.formatRelativeTime(backup.timestamp) }} • {{ backupStore.formatFileSize(backup.size) }}
+                          <v-icon size="16">mdi-eye</v-icon>
+                        </v-btn>
+                        <v-btn
+                          icon
+                          size="small"
+                          variant="text"
+                          @click="showEditDialog(backup)"
+                          :disabled="backup.isAutomatic"
+                          title="编辑标签"
+                        >
+                          <v-icon size="16">mdi-tag</v-icon>
+                        </v-btn>
+                        <v-btn
+                          icon
+                          size="small"
+                          variant="text"
+                          color="error"
+                          @click="confirmDeleteBackup(backup)"
+                          :disabled="backup.isAutomatic"
+                          title="删除备份"
+                        >
+                          <v-icon size="16">mdi-delete</v-icon>
+                        </v-btn>
+                        <v-btn
+                          icon
+                          size="small"
+                          variant="text"
+                          color="primary"
+                          @click="confirmRestoreBackup(backup)"
+                          title="恢复此备份"
+                        >
+                          <v-icon size="16">mdi-restore</v-icon>
+                        </v-btn>
                       </div>
                     </div>
-                    <div class="d-flex align-center gap-1">
-                      <v-btn
-                        icon
-                        size="small"
-                        variant="text"
-                        @click="showPreviewDialog(backup)"
-                        title="预览内容"
+
+                    <!-- 标签 -->
+                    <div v-if="backup.tags && backup.tags.length > 0" class="mb-2">
+                      <v-chip
+                        v-for="tag in backup.tags"
+                        :key="tag"
+                        size="x-small"
+                        variant="outlined"
+                        class="me-1 mb-1"
                       >
-                        <v-icon size="16">mdi-eye</v-icon>
-                      </v-btn>
-                      <v-btn
-                        icon
-                        size="small"
-                        variant="text"
-                        @click="showEditDialog(backup)"
-                        :disabled="backup.isAutomatic"
-                        title="编辑标签"
-                      >
-                        <v-icon size="16">mdi-tag</v-icon>
-                      </v-btn>
-                      <v-btn
-                        icon
-                        size="small"
-                        variant="text"
-                        color="error"
-                        @click="confirmDeleteBackup(backup)"
-                        :disabled="backup.isAutomatic"
-                        title="删除备份"
-                      >
-                        <v-icon size="16">mdi-delete</v-icon>
-                      </v-btn>
-                      <v-btn
-                        icon
-                        size="small"
-                        variant="text"
-                        color="primary"
-                        @click="confirmRestoreBackup(backup)"
-                        title="恢复此备份"
-                      >
-                        <v-icon size="16">mdi-restore</v-icon>
-                      </v-btn>
+                        {{ tag }}
+                      </v-chip>
                     </div>
-                  </div>
 
-                  <!-- 标签 -->
-                  <div v-if="backup.tags && backup.tags.length > 0" class="mb-2">
-                    <v-chip
-                      v-for="tag in backup.tags"
-                      :key="tag"
-                      size="x-small"
-                      variant="outlined"
-                      class="me-1 mb-1"
-                    >
-                      {{ tag }}
-                    </v-chip>
-                  </div>
-
-                  <!-- 内容预览 -->
-                  <div class="backup-preview">
-                    <div class="text-caption mb-1 text-medium-emphasis">内容预览:</div>
-                    <pre class="preview-content">{{ backupStore.getBackupPreview(backup.content, 3) }}</pre>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-timeline-item>
-          </v-timeline>
+                    <!-- 内容预览 - 添加点击事件 -->
+                    <div class="backup-preview clickable" @click="showPreviewDialog(backup)">
+                      <div class="text-caption mb-1 text-medium-emphasis d-flex align-center">
+                        <span>内容预览:</span>
+                        <v-icon size="12" class="ms-1">mdi-eye</v-icon>
+                      </div>
+                      <pre class="preview-content">{{ backupStore.getBackupPreview(backup.content, 3) }}</pre>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-timeline-item>
+            </v-timeline>
+          </div>
         </v-card-text>
       </v-card>
     </v-container>
 
-    <!-- 创建备份对话框 -->
-    <v-dialog v-model="showCreateBackupDialog" max-width="500px" persistent>
-      <v-card class="rounded-xl">
+    <!-- 创建备份对话框 - 增加边框线 -->
+    <v-dialog v-model="showCreateBackupDialog" max-width="600px" persistent>
+      <v-card class="rounded-xl dialog-card">
         <v-card-title class="d-flex align-center">
           <v-icon class="me-2" color="primary">mdi-plus</v-icon>
           创建手动备份
@@ -250,6 +255,26 @@
               persistent-hint
             />
           </div>
+
+          <div class="mb-3">
+            <div class="text-subtitle-2 mb-2">备份内容</div>
+            <v-radio-group v-model="backupContentType" inline>
+              <v-radio label="使用当前系统hosts" value="system"></v-radio>
+              <v-radio label="自定义内容" value="custom"></v-radio>
+            </v-radio-group>
+          </div>
+
+          <v-textarea
+            v-if="backupContentType === 'custom'"
+            v-model="newBackupContent"
+            label="自定义备份内容"
+            placeholder="输入自定义hosts文件内容"
+            rows="10"
+            auto-grow
+            class="mb-3"
+            hint="输入您想要备份的hosts文件内容"
+            persistent-hint
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -272,9 +297,9 @@
       </v-card>
     </v-dialog>
 
-    <!-- 预览对话框 -->
+    <!-- 预览对话框 - 增加边框线 -->
     <v-dialog v-model="showContentPreviewDialog" max-width="800px">
-      <v-card class="rounded-xl">
+      <v-card class="rounded-xl dialog-card">
         <v-card-title class="d-flex align-center">
           <v-icon class="me-2" color="info">mdi-eye</v-icon>
           备份内容预览
@@ -298,9 +323,9 @@
       </v-card>
     </v-dialog>
 
-    <!-- 编辑标签对话框 -->
+    <!-- 编辑标签对话框 - 增加边框线 -->
     <v-dialog v-model="showEditTagsDialog" max-width="500px" persistent>
-      <v-card class="rounded-xl">
+      <v-card class="rounded-xl dialog-card">
         <v-card-title class="d-flex align-center">
           <v-icon class="me-2" color="primary">mdi-tag</v-icon>
           编辑备份标签
@@ -341,9 +366,9 @@
       </v-card>
     </v-dialog>
 
-    <!-- 确认恢复对话框 -->
+    <!-- 确认恢复对话框 - 增加边框线 -->
     <v-dialog v-model="showRestoreConfirmDialog" max-width="500px" persistent>
-      <v-card class="rounded-xl">
+      <v-card class="rounded-xl dialog-card">
         <v-card-title class="d-flex align-center">
           <v-icon class="me-2" color="warning">mdi-restore</v-icon>
           确认恢复备份
@@ -384,9 +409,9 @@
       </v-card>
     </v-dialog>
 
-    <!-- 确认删除对话框 -->
+    <!-- 确认删除对话框 - 增加边框线 -->
     <v-dialog v-model="showDeleteConfirmDialog" max-width="400px" persistent>
-      <v-card class="rounded-xl">
+      <v-card class="rounded-xl dialog-card">
         <v-card-title class="d-flex align-center">
           <v-icon class="me-2" color="error">mdi-delete</v-icon>
           确认删除备份
@@ -440,6 +465,8 @@ const showDeleteConfirmDialog = ref(false);
 
 const newBackupDescription = ref('');
 const newBackupTags = ref([]);
+const newBackupContent = ref('');
+const backupContentType = ref('system'); // 'system' 或 'custom'
 const editingTags = ref([]);
 const selectedBackup = ref(null);
 
@@ -472,19 +499,22 @@ const formatTimestamp = computed(() => {
 });
 
 // 方法
-const refreshBackups = async () => {
+const refreshBackupsSilently = async () => {
   try {
     await backupStore.loadBackups();
-    notificationStore.showNotification('备份列表已刷新', 'success');
   } catch (error) {
-    notificationStore.showNotification('刷新备份列表失败: ' + error.message, 'error');
+    console.error('刷新备份列表失败:', error);
   }
 };
 
 const createBackup = async () => {
   creating.value = true;
   try {
-    await backupStore.createBackup(newBackupDescription.value, newBackupTags.value);
+    if (backupContentType.value === 'custom') {
+      await backupStore.createBackupWithContent(newBackupDescription.value, newBackupContent.value, newBackupTags.value);
+    } else {
+      await backupStore.createBackup(newBackupDescription.value, newBackupTags.value);
+    }
     notificationStore.showNotification('备份创建成功', 'success');
     closeCreateBackupDialog();
   } catch (error) {
@@ -498,6 +528,8 @@ const closeCreateBackupDialog = () => {
   showCreateBackupDialog.value = false;
   newBackupDescription.value = '';
   newBackupTags.value = [];
+  newBackupContent.value = '';
+  backupContentType.value = 'system';
 };
 
 const showPreviewDialog = (backup) => {
@@ -571,7 +603,7 @@ onMounted(async () => {
   // 确保 Go 后端已经准备好
   if (window.go && window.go.services && window.go.services.ConfigService) {
     try {
-      await refreshBackups();
+      await refreshBackupsSilently();
     } catch (error) {
       console.error('初始化备份数据失败:', error);
       notificationStore.showNotification('初始化备份数据失败: ' + error.message, 'error');
@@ -582,7 +614,7 @@ onMounted(async () => {
     setTimeout(async () => {
       if (window.go && window.go.services && window.go.services.ConfigService) {
         try {
-          await refreshBackups();
+          await refreshBackupsSilently();
         } catch (error) {
           console.error('延迟加载备份数据失败:', error);
         }
@@ -606,6 +638,30 @@ onMounted(async () => {
   transform: translateY(-2px);
 }
 
+.backup-timeline-container {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.backup-timeline-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.backup-timeline-container::-webkit-scrollbar-track {
+  background: rgba(var(--v-theme-surface-variant), 0.3);
+  border-radius: 3px;
+}
+
+.backup-timeline-container::-webkit-scrollbar-thumb {
+  background: rgba(var(--v-theme-primary), 0.5);
+  border-radius: 3px;
+}
+
+.backup-timeline-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--v-theme-primary), 0.7);
+}
+
 .backup-timeline {
   padding: 16px;
 }
@@ -624,6 +680,16 @@ onMounted(async () => {
   padding: 12px;
   border-radius: 8px;
   border-left: 3px solid rgb(var(--v-theme-primary));
+}
+
+.backup-preview.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.backup-preview.clickable:hover {
+  background: rgba(var(--v-theme-surface-variant), 0.5);
+  transform: translateY(-1px);
 }
 
 .preview-content {
@@ -658,5 +724,10 @@ onMounted(async () => {
 
 .icon-btn:hover {
   transform: scale(1.1);
+}
+
+.dialog-card {
+  border: 2px solid rgba(var(--v-theme-primary), 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
 }
 </style> 

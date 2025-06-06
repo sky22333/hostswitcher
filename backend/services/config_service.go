@@ -679,8 +679,6 @@ func (s *ConfigService) RestoreDefaultHosts() error {
 	return nil
 }
 
-
-
 // FlushDNSCache 刷新系统DNS缓存
 // 使用Windows API实现，兼容Win10及以上版本
 func (s *ConfigService) FlushDNSCache() error {
@@ -729,6 +727,28 @@ func (s *ConfigService) CreateManualBackup(description string, tags []string) (*
 	
 	if description == "" {
 		description = "手动备份"
+	}
+	
+	return s.backupService.CreateBackup(content, description, false, tags)
+}
+
+// CreateManualBackupWithContent 创建包含自定义内容的手动备份
+func (s *ConfigService) CreateManualBackupWithContent(description, content string, tags []string) (*models.Backup, error) {
+	if s.backupService == nil {
+		return nil, fmt.Errorf("备份服务未初始化")
+	}
+	
+	if description == "" {
+		description = "手动备份"
+	}
+	
+	if content == "" {
+		// 如果内容为空，则使用当前系统hosts内容
+		var err error
+		content, err = s.ReadSystemHosts()
+		if err != nil {
+			return nil, fmt.Errorf("读取系统hosts失败: %v", err)
+		}
 	}
 	
 	return s.backupService.CreateBackup(content, description, false, tags)

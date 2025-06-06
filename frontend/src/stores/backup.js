@@ -126,6 +126,25 @@ export const useBackupStore = defineStore('backup', () => {
   }
 
   /**
+   * 创建带自定义内容的手动备份
+   */
+  async function createBackupWithContent(description, content, tags = []) {
+    loading.value = true;
+    try {
+      const backup = await window.go.services.ConfigService.CreateManualBackupWithContent(description, content, tags);
+      if (backup) {
+        await loadBackups(); // 重新加载备份列表
+      }
+      return backup;
+    } catch (error) {
+      console.error('创建备份失败:', error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
    * 从备份恢复
    */
   async function restoreBackup(backupId) {
@@ -214,6 +233,7 @@ export const useBackupStore = defineStore('backup', () => {
     loadBackups,
     loadStats,
     createBackup,
+    createBackupWithContent,
     restoreBackup,
     deleteBackup,
     updateBackupTags,
