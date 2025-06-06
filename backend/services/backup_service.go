@@ -21,30 +21,22 @@ import (
 type BackupService struct {
 	ctx        context.Context
 	appDir     string
-	backupDir  string
 	backupFile string
 	maxBackups int
 }
 
 // NewBackupService 创建一个新的备份服务实例
 func NewBackupService(appDir string) *BackupService {
-	backupDir := filepath.Join(appDir, "backups")
 	backupFile := filepath.Join(appDir, "backups.json")
 	
-	// 创建应用目录和备份目录
+	// 创建应用目录
 	err := os.MkdirAll(appDir, 0755)
 	if err != nil {
 		fmt.Printf("创建应用目录失败: %v\n", err)
 	}
-	
-	err = os.MkdirAll(backupDir, 0755)
-	if err != nil {
-		fmt.Printf("创建备份目录失败: %v\n", err)
-	}
 
 	return &BackupService{
 		appDir:     appDir,
-		backupDir:  backupDir,
 		backupFile: backupFile,
 		maxBackups: 99, // 最多保留99个自动备份
 	}
