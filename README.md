@@ -7,6 +7,11 @@
 
 一个现代化的windows hosts 文件管理工具，提供直观的图形界面和强大的管理功能。支持本地配置管理、远程源同步、系统托盘集成等特性。
 
+<p align="center">
+  <img src="https://count.getloli.com/get/@sky22333.hostswitcher?theme=rule34" alt="Visitors">
+</p>
+
+
 ## ✨ 功能特性
 
 ### 🎯 核心功能
@@ -211,3 +216,7 @@ hostswitcher/
 *设置页面 - 主题切换和系统集成功能*
 ![设置页面](/.github/4.jpg)
 
+
+---
+
+[![Star History Chart](https://api.star-history.com/svg?repos=sky22333/hostswitcher&type=Date)](https://www.star-history.com/#sky22333/hostswitcher&Date)
