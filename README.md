@@ -219,4 +219,5 @@ hostswitcher/
 
 ---
 
-[![Star History Chart](https://api.star-history.com/svg?repos=sky22333/hostswitcher&type=Date)](https://www.star-history.com/#sky22333/hostswitcher&Date)
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/sky22333/hostswitcher.svg?variant=adaptive)](https://starchart.cc/sky22333/hostswitcher)
