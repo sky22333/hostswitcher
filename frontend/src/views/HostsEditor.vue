@@ -23,111 +23,54 @@
                 
                 <!-- 操作按钮组 -->
                 <div class="d-flex align-center gap-1">
-                  <v-tooltip location="bottom">
-                    <template #activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        icon
-                        variant="text"
-                        size="small"
-                        @click="openSystemHostsFile"
-                        :disabled="loading || saving || restoring || flushing"
-                        class="icon-btn"
-                      >
-                        <v-icon>mdi-file-outline</v-icon>
-                      </v-btn>
-                    </template>
-                    <span>系统hosts配置文件：{{ systemHostsPath }}</span>
-                  </v-tooltip>
+                  <ToolbarButton
+                    icon="mdi-file-outline"
+                    :tooltip="`系统hosts配置文件：${systemHostsPath}`"
+                    :disabled="loading || saving || restoring || flushing"
+                    @click="openSystemHostsFile"
+                  />
                   
-                  <v-tooltip location="bottom">
-                    <template #activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        icon
-                        variant="text"
-                        size="small"
-                        @click="showRestoreDialog = true"
-                        :disabled="loading || saving || restoring || flushing"
-                        class="icon-btn warning-btn"
-                      >
-                        <v-icon>mdi-restore</v-icon>
-                      </v-btn>
-                    </template>
-                    <span>恢复默认hosts文件，清除所有自定义配置。</span>
-                  </v-tooltip>
+                  <ToolbarButton
+                    icon="mdi-restore"
+                    tooltip="恢复默认hosts文件，清除所有自定义配置。"
+                    :disabled="loading || saving || restoring || flushing"
+                    button-class="icon-btn warning-btn"
+                    @click="showRestoreDialog = true"
+                  />
                   
-                  <v-tooltip location="bottom">
-                    <template #activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        icon
-                        variant="text"
-                        size="small"
-                        @click="refreshContent"
-                        :loading="loading"
-                        :disabled="loading || saving || restoring || flushing"
-                        class="icon-btn"
-                      >
-                        <v-icon>mdi-refresh</v-icon>
-                      </v-btn>
-                    </template>
-                    <span>刷新内容，重新加载当前hosts文件。</span>
-                  </v-tooltip>
+                  <ToolbarButton
+                    icon="mdi-refresh"
+                    tooltip="刷新内容，重新加载当前hosts文件。"
+                    :loading="loading"
+                    :disabled="loading || saving || restoring || flushing"
+                    @click="refreshContent"
+                  />
                   
-                  <v-tooltip location="bottom">
-                    <template #activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        icon
-                        variant="text"
-                        size="small"
-                        @click="flushDNSCache"
-                        :loading="flushing"
-                        :disabled="loading || saving || restoring || flushing"
-                        class="icon-btn info-btn"
-                      >
-                        <v-icon>mdi-dns</v-icon>
-                      </v-btn>
-                    </template>
-                    <span>刷新DNS缓存，清除系统域名解析缓存。</span>
-                  </v-tooltip>
+                  <ToolbarButton
+                    icon="mdi-dns"
+                    tooltip="刷新DNS缓存，清除系统域名解析缓存。"
+                    :loading="flushing"
+                    :disabled="loading || saving || restoring || flushing"
+                    button-class="icon-btn info-btn"
+                    @click="flushDNSCache"
+                  />
                   
-                  <v-tooltip location="bottom">
-                    <template #activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        icon
-                        variant="text"
-                        size="small"
-                        @click="validateContent"
-                        :disabled="!editorContent || loading || saving || restoring || flushing"
-                        class="icon-btn"
-                      >
-                        <v-icon>mdi-check-circle-outline</v-icon>
-                      </v-btn>
-                    </template>
-                    <span>验证内容格式，检查hosts文件语法。</span>
-                  </v-tooltip>
+                  <ToolbarButton
+                    icon="mdi-check-circle-outline"
+                    tooltip="验证内容格式，检查hosts文件语法。"
+                    :disabled="!editorContent || loading || saving || restoring || flushing"
+                    @click="validateContent"
+                  />
                   
 
-                  <v-tooltip location="bottom">
-                    <template #activator="{ props }">
-                      <v-btn
-                        v-bind="props"
-                        icon
-                        variant="text"
-                        size="small"
-                        @click="saveContent"
-                        :loading="saving"
-                        :disabled="!hasChanges || saving || restoring || flushing"
-                        class="icon-btn primary-btn"
-                      >
-                        <v-icon>mdi-content-save</v-icon>
-                      </v-btn>
-                    </template>
-                    <span>保存更改，将内容写入hosts文件。</span>
-                  </v-tooltip>
+                  <ToolbarButton
+                    icon="mdi-content-save"
+                    tooltip="保存更改，将内容写入hosts文件。"
+                    :loading="saving"
+                    :disabled="!hasChanges || saving || restoring || flushing"
+                    button-class="icon-btn primary-btn"
+                    @click="saveContent"
+                  />
                 </div>
               </div>
             </v-col>
@@ -330,6 +273,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useConfigStore } from '@/stores/config';
 import { useNotificationStore } from '@/stores/notification';
 import MonacoEditor from '@/components/MonacoEditor.vue';
+import ToolbarButton from '@/components/ToolbarButton.vue';
 
 // 状态管理
 const configStore = useConfigStore();
@@ -687,7 +631,7 @@ watch(selectedConfigId, (newVal, oldVal) => {
 
 .editor-toolbar,
 .editor-main {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  border: none;
   background: rgba(var(--v-theme-surface), 0.95);
 }
 
@@ -710,41 +654,14 @@ watch(selectedConfigId, (newVal, oldVal) => {
   gap: 16px;
 }
 
-/* 图标按钮样式 */
+/* 图标按钮样式 - 使用全局样式，仅保留特定样式 */
 .icon-btn {
   opacity: 0.7;
-  transition: all 0.2s ease !important;
-  border-radius: 8px !important;
 }
 
 .icon-btn:hover {
   opacity: 1;
   background: rgba(var(--v-theme-on-surface), 0.08) !important;
-  transform: scale(1.05);
-}
-
-.icon-btn:active {
-  transform: scale(0.98);
-}
-
-.icon-btn.warning-btn:hover {
-  background: rgba(var(--v-theme-warning), 0.12) !important;
-  color: rgb(var(--v-theme-warning)) !important;
-}
-
-.icon-btn.info-btn:hover {
-  background: rgba(var(--v-theme-info), 0.12) !important;
-  color: rgb(var(--v-theme-info)) !important;
-}
-
-.icon-btn.success-btn:hover {
-  background: rgba(var(--v-theme-success), 0.12) !important;
-  color: rgb(var(--v-theme-success)) !important;
-}
-
-.icon-btn.primary-btn:hover {
-  background: rgba(var(--v-theme-primary), 0.12) !important;
-  color: rgb(var(--v-theme-primary)) !important;
 }
 
 /* 深色主题适配 */

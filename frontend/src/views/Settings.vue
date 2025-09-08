@@ -88,14 +88,6 @@
                 <v-list-subheader>关于</v-list-subheader>
                 <v-list-item>
                   <template v-slot:prepend>
-                    <v-icon icon="mdi-information"></v-icon>
-                  </template>
-                  <v-list-item-title>版本信息</v-list-item-title>
-                  <v-list-item-subtitle>host 管理工具 v1.3</v-list-item-subtitle>
-                </v-list-item>
-                
-                <v-list-item>
-                  <template v-slot:prepend>
                     <v-icon icon="mdi-github"></v-icon>
                   </template>
                   <v-list-item-title>GitHub</v-list-item-title>

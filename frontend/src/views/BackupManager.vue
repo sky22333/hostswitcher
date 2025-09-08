@@ -831,7 +831,7 @@ onMounted(async () => {
 .backup-preview {
   background: rgba(var(--v-theme-surface-variant), 0.3);
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--app-border-radius);
   border-left: 3px solid rgb(var(--v-theme-primary));
 }
 
@@ -874,7 +874,7 @@ onMounted(async () => {
   word-break: break-all;
   background: rgba(var(--v-theme-surface-variant), 0.3);
   padding: 16px;
-  border-radius: 8px;
+  border-radius: var(--app-border-radius);
   max-height: 400px;
   overflow-y: auto;
 }
@@ -897,4 +897,4 @@ onMounted(async () => {
   border: 2px solid rgba(var(--v-theme-primary), 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
 }
-</style> 
+</style>

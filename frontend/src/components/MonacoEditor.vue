@@ -103,27 +103,15 @@ watch(() => props.options, (newValue) => {
 
 // 监听主题变化
 watch(isDarkTheme, (newValue) => {
-  console.log('Monaco编辑器主题变化:', newValue ? '暗色' : '亮色');
   if (editor) {
     applyEditorTheme();
   }
 }, { immediate: true });
 
 function setupMonacoLanguage() {
-  try {
-    console.log('Monaco编辑器配置中...');
-    
-    // 这是一个简化版本中文本地化
-    if (window.MonacoEnvironment) {
-      window.MonacoEnvironment.Locale = 'zh-cn';
-    } else {
-      window.MonacoEnvironment = {
-        Locale: 'zh-cn'
-      };
-    }
-    
-  } catch (error) {
-    console.log('Monaco编辑器配置:', error.message);
+  // 简化的语言配置
+  if (!window.MonacoEnvironment) {
+    window.MonacoEnvironment = { Locale: 'zh-cn' };
   }
 }
 
@@ -131,7 +119,7 @@ function setupMonacoLanguage() {
 function initEditor() {
   if (!editorContainer.value) return;
   
-  // 默认选项
+  // 精简的默认选项 - 移除冗余配置
   const defaultOptions = {
     theme: isDarkTheme.value ? 'vs-dark' : 'vs',
     fontSize: 14,
@@ -140,22 +128,11 @@ function initEditor() {
     minimap: { enabled: false },
     scrollBeyondLastLine: false,
     lineNumbers: 'on',
-    renderLineHighlight: 'all',
     tabSize: 4,
     insertSpaces: true,
-    detectIndentation: false,
     folding: true,
-    foldingStrategy: 'indentation',
-    showFoldingControls: 'always',
     renderWhitespace: 'selection',
-    contextmenu: true,
-    selectionHighlight: true,
-    occurrencesHighlight: true,
-    codeLens: false,
-    overviewRulerBorder: false,
     scrollbar: {
-      vertical: 'auto',
-      horizontal: 'auto',
       verticalScrollbarSize: 8,
       horizontalScrollbarSize: 8,
     },
@@ -199,28 +176,19 @@ function initEditor() {
   }
 }
 
-// 统一的主题应用方法
+// 简化的主题应用方法
 function applyEditorTheme() {
   if (!editor) return;
   
   const theme = isDarkTheme.value ? 'vs-dark' : 'vs';
-  console.log('正在应用Monaco编辑器主题:', theme);
+  monaco.editor.setTheme(theme);
   
-  try {
-    // 应用主题
-    monaco.editor.setTheme(theme);
-    
-    // 强制重新布局和渲染
-    setTimeout(() => {
-      if (editor) {
-        editor.layout();
-        editor.render(true);
-        console.log('Monaco编辑器主题应用完成:', theme);
-      }
-    }, 50);
-  } catch (error) {
-    console.error('应用Monaco编辑器主题失败:', error);
-  }
+  // 延迟布局确保主题应用完成
+  setTimeout(() => {
+    if (editor) {
+      editor.layout();
+    }
+  }, 50);
 }
 
 // 设置hosts文件语法高亮

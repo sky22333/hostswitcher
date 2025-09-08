@@ -9,6 +9,8 @@
   --app-transition: all 0.2s ease;
   --app-scrollbar-size: 6px;
   --app-scrollbar-radius: 3px;
+  --app-hover-transform: translateY(-1px);
+  --app-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* 基础重置 */
@@ -64,6 +66,36 @@ html, body, #app {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   background: rgba(var(--v-theme-surface), 0.8);
+}
+
+/* 统一按钮样式 */
+.icon-btn {
+  transition: var(--app-transition) !important;
+  border-radius: var(--app-border-radius) !important;
+}
+
+.icon-btn:hover {
+  transform: var(--app-hover-transform);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+.icon-btn.warning-btn:hover {
+  background-color: rgba(var(--v-theme-warning), 0.1) !important;
+}
+
+.icon-btn.info-btn:hover {
+  background-color: rgba(var(--v-theme-info), 0.1) !important;
+}
+
+.icon-btn.success-btn:hover {
+  background-color: rgba(var(--v-theme-success), 0.1) !important;
+}
+
+.icon-btn.primary-btn:hover {
+  background-color: rgba(var(--v-theme-primary), 0.1) !important;
 }
 
 /* Vuetify组件统一样式覆盖 */

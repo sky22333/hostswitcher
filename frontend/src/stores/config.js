@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { withLoading, withLoadingAndReload, safeAsync } from './utils';
 
 /**
  * 配置管理存储
@@ -68,17 +69,12 @@ export const useConfigStore = defineStore('config', () => {
    * @param {string} content - 配置内容
    */
   async function createConfig(name, description, content) {
-    loading.value = true;
-    try {
-      const newConfig = await window.go.services.ConfigService.CreateConfig(name, description, content);
-      await loadConfigs(); // 重新加载配置列表
-      return newConfig;
-    } catch (error) {
-      console.error('创建配置失败:', error);
-      throw error;
-    } finally {
-      loading.value = false;
-    }
+    return withLoadingAndReload(
+      () => window.go.services.ConfigService.CreateConfig(name, description, content),
+      loading,
+      loadConfigs,
+      (error) => console.error('创建配置失败:', error)
+    );
   }
   
   /**
@@ -89,17 +85,12 @@ export const useConfigStore = defineStore('config', () => {
    * @param {string} content - 配置内容
    */
   async function updateConfig(id, name, description, content) {
-    loading.value = true;
-    try {
-      const updatedConfig = await window.go.services.ConfigService.UpdateConfig(id, name, description, content);
-      await loadConfigs(); // 重新加载配置列表
-      return updatedConfig;
-    } catch (error) {
-      console.error('更新配置失败:', error);
-      throw error;
-    } finally {
-      loading.value = false;
-    }
+    return withLoadingAndReload(
+      () => window.go.services.ConfigService.UpdateConfig(id, name, description, content),
+      loading,
+      loadConfigs,
+      (error) => console.error('更新配置失败:', error)
+    );
   }
   
   /**
@@ -107,16 +98,12 @@ export const useConfigStore = defineStore('config', () => {
    * @param {string} id - 配置ID
    */
   async function deleteConfig(id) {
-    loading.value = true;
-    try {
-      await window.go.services.ConfigService.DeleteConfig(id);
-      await loadConfigs(); // 重新加载配置列表
-    } catch (error) {
-      console.error('删除配置失败:', error);
-      throw error;
-    } finally {
-      loading.value = false;
-    }
+    return withLoadingAndReload(
+      () => window.go.services.ConfigService.DeleteConfig(id),
+      loading,
+      loadConfigs,
+      (error) => console.error('删除配置失败:', error)
+    );
   }
   
   /**
@@ -124,28 +111,22 @@ export const useConfigStore = defineStore('config', () => {
    * @param {string} id - 配置ID
    */
   async function applyConfig(id) {
-    loading.value = true;
-    try {
-      await window.go.services.ConfigService.ApplyConfig(id);
-      await loadConfigs(); // 重新加载配置列表
-    } catch (error) {
-      console.error('应用配置失败:', error);
-      throw error;
-    } finally {
-      loading.value = false;
-    }
+    return withLoadingAndReload(
+      () => window.go.services.ConfigService.ApplyConfig(id),
+      loading,
+      loadConfigs,
+      (error) => console.error('应用配置失败:', error)
+    );
   }
   
   /**
    * 读取系统hosts文件
    */
   async function readSystemHosts() {
-    try {
-      return await window.go.services.ConfigService.ReadSystemHosts();
-    } catch (error) {
-      console.error('读取系统hosts文件失败:', error);
-      throw error;
-    }
+    return safeAsync(
+      () => window.go.services.ConfigService.ReadSystemHosts(),
+      (error) => console.error('读取系统hosts文件失败:', error)
+    );
   }
   
   /**
@@ -153,15 +134,12 @@ export const useConfigStore = defineStore('config', () => {
    * @param {string} content - hosts文件内容
    */
   async function writeSystemHosts(content) {
-    loading.value = true;
-    try {
-      await window.go.services.ConfigService.WriteSystemHosts(content);
-    } catch (error) {
-      console.error('写入系统hosts文件失败:', error);
-      throw error;
-    } finally {
-      loading.value = false;
-    }
+    return withLoading(
+      () => window.go.services.ConfigService.WriteSystemHosts(content),
+      loading,
+      null,
+      (error) => console.error('写入系统hosts文件失败:', error)
+    );
   }
   
   /**

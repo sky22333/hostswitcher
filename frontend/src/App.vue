@@ -3,21 +3,9 @@
     <!-- 侧边栏 -->
     <v-navigation-drawer
       permanent
-      width="280"
+      width="240"
       class="sidebar-custom"
     >
-      <!-- 侧边栏头部 -->
-      <div class="sidebar-header">
-        <div class="d-flex align-center pa-4">
-          <div class="sidebar-title">
-            <v-icon class="me-2" color="primary">mdi-dns</v-icon>
-            <span class="text-h6 font-weight-bold">Hosts 管理器</span>
-          </div>
-        </div>
-      </div>
-
-      <v-divider />
-
       <!-- 导航菜单 -->
       <v-list nav density="comfortable" class="nav-list">
         <v-list-item
@@ -32,8 +20,6 @@
           rounded="xl"
         />
       </v-list>
-
-
     </v-navigation-drawer>
 
     <!-- 主内容区域 -->
@@ -122,7 +108,7 @@ watch(activeTab, (newTab, oldTab) => {
 // 菜单项
 const menuItems = ref([
   {
-    title: 'Hosts编辑器',
+    title: 'Host编辑器',
     icon: 'mdi-file-document-edit',
     value: 'editor'
   },
@@ -137,7 +123,7 @@ const menuItems = ref([
     value: 'backup'
   },
   {
-    title: '设置',
+    title: '应用设置',
     icon: 'mdi-cog',
     value: 'settings'
   }
@@ -185,21 +171,11 @@ onMounted(async () => {
 /* 侧边栏样式 */
 .sidebar-custom {
   border-right: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  background: rgb(var(--v-theme-surface-variant));
-}
-
-.sidebar-header {
-  background: rgba(var(--v-theme-primary), 0.05);
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-}
-
-.sidebar-title {
-  display: flex;
-  align-items: center;
+  background: rgb(var(--v-theme-surface));
 }
 
 .nav-list {
-  padding: 8px;
+  padding: 16px 8px;
 }
 
 .nav-item {
@@ -235,11 +211,7 @@ onMounted(async () => {
 
 /* 深色主题适配 */
 .v-theme--dark .sidebar-custom {
-  background: rgb(var(--v-theme-surface-bright));
-}
-
-.v-theme--dark .sidebar-header {
-  background: rgba(var(--v-theme-primary), 0.08);
+  background: rgb(var(--v-theme-surface));
 }
 
 .v-theme--dark .main-app-bar {
