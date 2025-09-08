@@ -66,20 +66,21 @@ wails build -platform windows/amd64
 如果这个项目对您有帮助，请考虑给个 ⭐ Star！
 
 ## 📸 应用预览
-*Hosts 编辑器 - 基于 Monaco Editor 的代码编辑体验*
-![主界面](/.github/1.jpg)
+*Host编辑器*
+![主界面](/.github/demo/1.png)
 
-*远程源管理 - 轻松管理多个远程 hosts 源*
-![远程源管理](/.github/2.jpg)
+*远程源管理*
+![远程源管理](/.github/demo/2.png)
 
-*备份管理 - 轻松管理多个备份 hosts 源*
-![备份管理](/.github/3.jpg)
+*备份管理*
+![备份管理](/.github/demo/3.png)
 
-*设置页面 - 主题切换和系统集成功能*
-![设置页面](/.github/4.jpg)
+*应用设置*
+![设置页面](/.github/demo/4.png)
 
 
 ---
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/sky22333/hostswitcher.svg?variant=adaptive)](https://starchart.cc/sky22333/hostswitcher)
+
