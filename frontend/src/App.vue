@@ -83,6 +83,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import { useNotificationStore } from '@/stores/notification';
+import { useEventManager } from '@/utils/eventManager';
 
 // 组件导入
 import HostsEditor from '@/views/HostsEditor.vue';
@@ -94,6 +95,9 @@ import NotificationSystem from '@/components/NotificationSystem.vue';
 // Store
 const configStore = useConfigStore();
 const notificationStore = useNotificationStore();
+
+// 事件管理器
+const { addWailsListener } = useEventManager();
 
 // 响应式数据
 const activeTab = ref('editor');
@@ -140,28 +144,24 @@ onMounted(async () => {
   try {
     await configStore.initialize();
     
-    // 监听托盘事件
-    if (window.runtime && window.runtime.EventsOn) {
-      // 监听托盘更新远程源事件
-      window.runtime.EventsOn('tray-refresh-remote', () => {
-        // 切换到远程源页面
-        activeTab.value = 'remote';
-        notificationStore.showNotification('正在更新远程源...', 'info');
-      });
-      
-      // 监听托盘应用配置事件
-      window.runtime.EventsOn('tray-apply-config', (configId) => {
-        if (configId) {
-          configStore.applyConfig(configId).then(() => {
-            notificationStore.showNotification('配置已应用', 'success');
-          }).catch((error) => {
-            notificationStore.showNotification('应用配置失败: ' + error.message, 'error');
-          });
-        }
-      });
-    }
+    // 监听托盘事件 - 使用统一事件管理器
+    addWailsListener('tray-refresh-remote', () => {
+      // 切换到远程源页面
+      activeTab.value = 'remote';
+      notificationStore.showNotification('正在更新远程源...', 'info');
+    });
+    
+    addWailsListener('tray-apply-config', (configId) => {
+      if (configId) {
+        configStore.applyConfig(configId).then(() => {
+          notificationStore.showNotification('配置已应用', 'success');
+        }).catch((error) => {
+          notificationStore.showNotification('应用配置失败: ' + error.message, 'error');
+        });
+      }
+    });
   } catch (error) {
-    console.error('主应用初始化失败:', error);
+
     notificationStore.showNotification('初始化失败: ' + error.message, 'error');
   }
 });

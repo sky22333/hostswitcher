@@ -103,6 +103,7 @@
           <!-- Monaco编辑器 -->
           <div class="editor-container">
             <MonacoEditor
+              v-memo="[editorContent, editorOptions]"
               v-model="editorContent"
               language="hosts"
               :options="editorOptions"
@@ -269,17 +270,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, watch, nextTick, shallowRef } from 'vue';
 import { useConfigStore } from '@/stores/config';
 import { useNotificationStore } from '@/stores/notification';
 import MonacoEditor from '@/components/MonacoEditor.vue';
+import { useEventManager } from '@/utils/eventManager';
 import ToolbarButton from '@/components/ToolbarButton.vue';
 
-// 状态管理
 const configStore = useConfigStore();
 const notificationStore = useNotificationStore();
+const { addWailsListener } = useEventManager();
 
-// 编辑器状态
 const editorContent = ref('');
 const originalContent = ref('');
 const selectedConfigId = ref('system');
@@ -293,9 +294,7 @@ const showRefreshConfirmDialog = ref(false);
 const pendingAction = ref(null);
 const needsAdmin = ref(false);
 const restoring = ref(false);
-
-// 编辑器配置
-const editorOptions = {
+const editorOptions = shallowRef({
   fontSize: 14,
   wordWrap: 'on',
   automaticLayout: true,
@@ -311,9 +310,9 @@ const editorOptions = {
   showFoldingControls: 'always',
   rulers: [80],
   renderWhitespace: 'selection',
-};
+});
 
-// 计算属性
+
 const configItems = computed(() => {
   return [
     { 
@@ -350,7 +349,7 @@ const systemHostsPath = computed(() => {
   return configStore.systemHostsPath;
 });
 
-// 方法
+
 const loadConfigs = async () => {
   try {
     await configStore.loadConfigs();
@@ -388,14 +387,14 @@ const loadSelectedConfig = async () => {
         editorContent.value = config.Content;
         originalContent.value = config.Content;
       } else {
-        console.error('找不到配置:', selectedConfigId.value);
+
         selectedConfigId.value = 'system';
         await loadSelectedConfig();
         return;
       }
     }
   } catch (error) {
-    console.error('加载内容失败:', error);
+
     notificationStore.showNotification('加载内容失败: ' + error.message, 'error');
   }
 };
@@ -426,7 +425,6 @@ const saveContent = async () => {
       // 验证内容
       await configStore.validateHostsContent(editorContent.value);
       
-      // 保存到系统hosts文件
       await configStore.writeSystemHosts(editorContent.value);
       
       originalContent.value = editorContent.value;
@@ -444,11 +442,11 @@ const saveContent = async () => {
         originalContent.value = editorContent.value;
         notificationStore.showNotification('配置已保存', 'success');
       } else {
-        console.error('找不到要保存的配置');
+
       }
     }
   } catch (error) {
-    console.error('保存失败:', error);
+
     notificationStore.showNotification('保存失败: ' + error.message, 'error');
   } finally {
     saving.value = false;
@@ -501,7 +499,7 @@ const checkAdminPermission = async () => {
   try {
     needsAdmin.value = await configStore.isAdminRequired();
   } catch (error) {
-    console.error('检查权限失败:', error);
+
     needsAdmin.value = true;
   }
 };
@@ -509,19 +507,14 @@ const checkAdminPermission = async () => {
 const restoreDefault = async () => {
   restoring.value = true;
   try {
-    // 恢复默认hosts文件
     await configStore.restoreDefaultHosts();
     
-    // 等待一下确保文件系统同步
     await new Promise(resolve => setTimeout(resolve, 200));
     
-    // 强制重新加载内容，确保显示最新状态
     await loadSelectedConfig();
     
-    // 再次检查内容是否正确更新
     const newContent = await configStore.readSystemHosts();
     
-    // 确保编辑器内容也正确更新
     if (editorContent.value !== newContent) {
       editorContent.value = '';
       await nextTick();
@@ -532,7 +525,7 @@ const restoreDefault = async () => {
     
     notificationStore.showNotification('系统 hosts 文件已恢复为默认', 'success');
   } catch (error) {
-    console.error('恢复默认失败:', error);
+
     notificationStore.showNotification('恢复默认失败: ' + error.message, 'error');
   } finally {
     restoring.value = false;
@@ -544,7 +537,7 @@ const openSystemHostsFile = async () => {
     await window.go.services.TrayService.OpenSystemHostsFile();
     notificationStore.showNotification('已打开系统Hosts文件', 'success');
   } catch (error) {
-    console.error('打开系统hosts文件失败:', error);
+
     notificationStore.showNotification('打开系统Hosts文件失败: ' + (error.message || error), 'error');
   }
 };
@@ -555,68 +548,49 @@ const confirmRestoreDefault = async () => {
 };
 
 
-// DNS缓存刷新方法
+
 const flushDNSCache = async () => {
   flushing.value = true;
   try {
     await configStore.flushDNSCache();
     notificationStore.showNotification('DNS缓存已刷新', 'success');
   } catch (error) {
-    console.error('DNS缓存刷新失败:', error);
+
     notificationStore.showNotification('DNS缓存刷新失败: ' + error.message, 'error');
   } finally {
     flushing.value = false;
   }
 };
 
-// 生命周期
+
 onMounted(async () => {
   try {
-    // 初始化配置store
     await configStore.initialize();
-    
-    // 检查管理员权限
     await checkAdminPermission();
-    
-    // 强制选择系统hosts文件
     selectedConfigId.value = 'system';
-    
-    // 延迟确保所有初始化完成
     await new Promise(resolve => setTimeout(resolve, 200));
-    
-    // 强制加载系统hosts文件
     await loadSelectedConfig();
     
-    // 监听配置列表变化事件
-    if (window.runtime && window.runtime.EventsOn) {
-      window.runtime.EventsOn('config-list-changed', () => {
-        loadConfigs();
-      });
-      window.runtime.EventsOn('config-applied', () => {
-        loadConfigs();
-      });
-      window.runtime.EventsOn('system-hosts-updated', () => {
-        if (selectedConfigId.value === 'system') {
-          loadSelectedConfig();
-        }
-      });
-    }
+    addWailsListener('config-list-changed', () => {
+      loadConfigs();
+    });
+    addWailsListener('config-applied', () => {
+      loadConfigs();
+    });
+    addWailsListener('system-hosts-updated', () => {
+      if (selectedConfigId.value === 'system') {
+        loadSelectedConfig();
+      }
+    });
   } catch (error) {
-    console.error('初始化失败:', error);
+
     notificationStore.showNotification('初始化失败: ' + error.message, 'error');
   }
 });
 
-onBeforeUnmount(() => {
-  // 移除事件监听
-  if (window.runtime && window.runtime.EventsOff) {
-    window.runtime.EventsOff('config-list-changed');
-    window.runtime.EventsOff('config-applied');
-    window.runtime.EventsOff('system-hosts-updated');
-  }
-});
 
-// 监听配置选择变化
+
+
 watch(selectedConfigId, (newVal, oldVal) => {
   if (newVal !== oldVal && !loading.value) {
     handleConfigChange();

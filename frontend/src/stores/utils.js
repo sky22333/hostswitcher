@@ -22,7 +22,7 @@ export async function withLoading(operation, loadingRef, onSuccess = null, onErr
     if (onError) {
       onError(error);
     } else {
-      console.error('操作失败:', error);
+  
     }
     throw error;
   } finally {
@@ -64,7 +64,7 @@ export async function safeAsync(operation, onError = null) {
     if (onError) {
       onError(error);
     } else {
-      console.error('操作失败:', error);
+  
     }
     throw error;
   }

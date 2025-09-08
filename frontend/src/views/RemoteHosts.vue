@@ -39,6 +39,7 @@
                 <v-col
                   v-for="source in remoteStore.remoteSources"
                   :key="source.ID"
+                  v-memo="[source.ID, source.Name, source.URL, source.Status, source.LastUpdatedAt]"
                   cols="12"
                   md="6"
                   lg="4"
@@ -271,13 +272,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, onMounted, nextTick, shallowRef } from 'vue';
 import { useRemoteStore } from '@/stores/remote';
 import { useNotificationStore } from '@/stores/notification';
+import { useEventManager } from '@/utils/eventManager';
 
-// 状态管理
 const remoteStore = useRemoteStore();
 const notificationStore = useNotificationStore();
+const { addWailsListener } = useEventManager();
 
 // 表单状态
 const showAddDialog = ref(false);
@@ -290,12 +292,12 @@ const sourceForm = ref({
   url: '',
   updateFreq: 'startup',
 });
-const sourceToDelete = ref(null);
+const sourceToDelete = shallowRef(null);
 const form = ref(null);
 
 // 远程内容状态
 const remoteContent = ref('');
-const currentSource = ref(null);
+const currentSource = shallowRef(null);
 const loadingSourceId = ref(null);
 const updatingAll = ref(false);
 const applyingSourceId = ref(null);
@@ -311,48 +313,33 @@ onMounted(async () => {
   // 强制刷新远程源列表
   await refreshRemoteSources();
   
-  // 监听远程源列表变化事件
-  window.runtime.EventsOn('remote-source-list-changed', () => {
+  // 使用统一事件管理器监听远程源事件
+  addWailsListener('remote-source-list-changed', () => {
     refreshRemoteSources();
   });
   
-  // 监听远程源状态变化事件
-  window.runtime.EventsOn('remote-source-status-changed', (id) => {
+  addWailsListener('remote-source-status-changed', (id) => {
     refreshRemoteSources();
   });
   
-  // 监听远程源需要更新事件
-  window.runtime.EventsOn('remote-source-need-update', (id) => {
+  addWailsListener('remote-source-need-update', (id) => {
     const source = remoteStore.remoteSources.find(s => s.ID === id);
     if (source) {
       notificationStore.showNotification(`远程源 "${source.Name}" 需要更新`, 'info');
     }
   });
   
-  // 监听远程源应用到系统事件
-  window.runtime.EventsOn('remote-applied-to-system', (sourceName) => {
+  addWailsListener('remote-applied-to-system', (sourceName) => {
     notificationStore.showNotification(`远程源 "${sourceName}" 已成功应用到系统hosts文件`, 'success');
   });
   
-  // 监听远程内容合并到系统事件
-  window.runtime.EventsOn('remote-merged-to-system', (sourceName) => {
+  addWailsListener('remote-merged-to-system', (sourceName) => {
     notificationStore.showNotification(`远程内容 "${sourceName}" 已成功合并到系统hosts文件`, 'success');
   });
   
-  // 监听远程源从系统清理事件
-  window.runtime.EventsOn('remote-source-cleaned-from-system', (sourceName) => {
+  addWailsListener('remote-source-cleaned-from-system', (sourceName) => {
     notificationStore.showNotification(`远程源 "${sourceName}" 的内容已从系统hosts文件中清理`, 'info');
   });
-});
-
-onBeforeUnmount(() => {
-  // 移除事件监听
-  window.runtime.EventsOff('remote-source-list-changed');
-  window.runtime.EventsOff('remote-source-status-changed');
-  window.runtime.EventsOff('remote-source-need-update');
-  window.runtime.EventsOff('remote-applied-to-system');
-  window.runtime.EventsOff('remote-merged-to-system');
-  window.runtime.EventsOff('remote-source-cleaned-from-system');
 });
 
 // 刷新远程源列表
@@ -362,7 +349,7 @@ async function refreshRemoteSources() {
     // 强制触发响应式更新
     await nextTick();
   } catch (error) {
-    console.error('刷新远程源列表失败:', error);
+
     notificationStore.showNotification('加载远程源失败: ' + error, 'error');
   }
 }
@@ -370,7 +357,7 @@ async function refreshRemoteSources() {
 // 获取远程内容
 async function fetchRemoteContent(source) {
   if (!source || !source.ID) {
-    console.error('远程源数据无效:', source);
+
     notificationStore.showNotification('远程源数据无效', 'error');
     return;
   }
@@ -381,7 +368,7 @@ async function fetchRemoteContent(source) {
     currentSource.value = source;
     showPreviewDialog.value = true;
   } catch (error) {
-    console.error('获取远程内容失败:', error);
+
     notificationStore.showNotification('获取远程内容失败: ' + (error.message || error), 'error');
   } finally {
     loadingSourceId.value = null;
@@ -391,7 +378,7 @@ async function fetchRemoteContent(source) {
 // 编辑远程源
 function editRemoteSource(source) {
   if (!source || !source.ID) {
-    console.error('远程源数据无效:', source);
+
     notificationStore.showNotification('远程源数据无效', 'error');
     return;
   }
@@ -409,7 +396,7 @@ function editRemoteSource(source) {
 // 确认删除远程源
 function confirmDelete(source) {
   if (!source || !source.ID) {
-    console.error('远程源数据无效:', source);
+
     notificationStore.showNotification('远程源数据无效', 'error');
     return;
   }
@@ -428,11 +415,10 @@ async function deleteRemoteSource() {
     showDeleteDialog.value = false;
     sourceToDelete.value = null;
     
-    // 强制刷新UI
     await nextTick();
     await refreshRemoteSources();
   } catch (error) {
-    console.error('删除远程源失败:', error);
+
     notificationStore.showNotification('删除远程源失败: ' + (error.message || error), 'error');
   }
 }
@@ -446,7 +432,6 @@ async function saveRemoteSource() {
   
   try {
     if (isEditing.value) {
-      // 确保编辑时ID不为空
       if (!sourceForm.value.id || sourceForm.value.id.trim() === '') {
         notificationStore.showNotification('编辑远程源时ID不能为空', 'error');
         return;
@@ -471,11 +456,10 @@ async function saveRemoteSource() {
     showAddDialog.value = false;
     resetForm();
     
-    // 强制刷新UI
     await nextTick();
     await refreshRemoteSources();
   } catch (error) {
-    console.error('保存远程源失败:', error);
+
     notificationStore.showNotification(
       (isEditing.value ? '更新' : '添加') + '远程源失败: ' + (error.message || error),
       'error'
@@ -536,7 +520,6 @@ function getUpdateFreqText(freq) {
   }
 }
 
-// 安全显示文本 - 防止XSS和处理特殊字符
 function safeDisplayText(text, maxLength = 50) {
   if (!text) return '';
   
@@ -553,13 +536,11 @@ function safeDisplayText(text, maxLength = 50) {
   }
 }
 
-// 安全显示URL
 function safeDisplayUrl(url) {
   if (!url) return '';
   
   try {
     const cleaned = String(url).trim();
-    // 截断超长URL但保留协议部分
     if (cleaned.length > 60) {
       const protocolEnd = cleaned.indexOf('://') + 3;
       const start = cleaned.substring(0, protocolEnd + 15);
@@ -611,10 +592,8 @@ function formatDate(dateString) {
   }
 }
 
-// 直接应用到系统hosts文件
 async function applyDirectlyToSystem(source) {
   if (!source || !source.ID) {
-    console.error('远程源数据无效:', source);
     notificationStore.showNotification('远程源数据无效', 'error');
     return;
   }
@@ -624,7 +603,6 @@ async function applyDirectlyToSystem(source) {
     await remoteStore.applyRemoteToSystem(source.ID);
     notificationStore.showNotification(`远程源 "${source.Name}" 已成功应用到系统hosts文件`, 'success');
   } catch (error) {
-    console.error('应用到系统hosts文件失败:', error);
     notificationStore.showNotification('应用到系统hosts文件失败: ' + (error.message || error), 'error');
   } finally {
     applyingSourceId.value = null;

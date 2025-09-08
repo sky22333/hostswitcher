@@ -2,23 +2,13 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { withLoading, withLoadingAndReload, safeAsync } from './utils';
 
-/**
- * 配置管理存储
- * 负责管理hosts配置的状态和操作
- */
 export const useConfigStore = defineStore('config', () => {
-  // 配置列表
   const configs = ref([]);
-  // 当前激活的配置
   const activeConfig = ref(null);
-  // 加载状态
   const loading = ref(false);
-  // 系统hosts文件路径
   const systemHostsPath = ref('');
-  // 管理员模式状态
   const isAdminMode = ref(false);
   
-  // 计算属性：获取排序后的配置列表
   const sortedConfigs = computed(() => {
     return [...configs.value].sort((a, b) => {
       // 激活的配置排在最前面
@@ -29,9 +19,6 @@ export const useConfigStore = defineStore('config', () => {
     });
   });
   
-  /**
-   * 初始化store
-   */
   async function initialize() {
     try {
       systemHostsPath.value = await window.go.services.ConfigService.GetSystemHostsPath();
@@ -40,13 +27,10 @@ export const useConfigStore = defineStore('config', () => {
       isAdminMode.value = !needsAdmin;
       await loadConfigs();
     } catch (error) {
-      console.error('初始化配置store失败:', error);
+  
     }
   }
   
-  /**
-   * 加载所有配置
-   */
   async function loadConfigs() {
     loading.value = true;
     try {
@@ -56,127 +40,89 @@ export const useConfigStore = defineStore('config', () => {
         activeConfig.value = active;
       }
     } catch (error) {
-      console.error('加载配置失败:', error);
+  
     } finally {
       loading.value = false;
     }
   }
   
-  /**
-   * 创建新配置
-   * @param {string} name - 配置名称
-   * @param {string} description - 配置描述
-   * @param {string} content - 配置内容
-   */
   async function createConfig(name, description, content) {
     return withLoadingAndReload(
       () => window.go.services.ConfigService.CreateConfig(name, description, content),
       loading,
       loadConfigs,
-      (error) => console.error('创建配置失败:', error)
+      (error) => {}
     );
   }
   
-  /**
-   * 更新配置
-   * @param {string} id - 配置ID
-   * @param {string} name - 配置名称
-   * @param {string} description - 配置描述
-   * @param {string} content - 配置内容
-   */
   async function updateConfig(id, name, description, content) {
     return withLoadingAndReload(
       () => window.go.services.ConfigService.UpdateConfig(id, name, description, content),
       loading,
       loadConfigs,
-      (error) => console.error('更新配置失败:', error)
+      (error) => {}
     );
   }
   
-  /**
-   * 删除配置
-   * @param {string} id - 配置ID
-   */
   async function deleteConfig(id) {
     return withLoadingAndReload(
       () => window.go.services.ConfigService.DeleteConfig(id),
       loading,
       loadConfigs,
-      (error) => console.error('删除配置失败:', error)
+      (error) => {}
     );
   }
   
-  /**
-   * 应用配置
-   * @param {string} id - 配置ID
-   */
   async function applyConfig(id) {
     return withLoadingAndReload(
       () => window.go.services.ConfigService.ApplyConfig(id),
       loading,
       loadConfigs,
-      (error) => console.error('应用配置失败:', error)
+      (error) => {}
     );
   }
   
-  /**
-   * 读取系统hosts文件
-   */
   async function readSystemHosts() {
     return safeAsync(
       () => window.go.services.ConfigService.ReadSystemHosts(),
-      (error) => console.error('读取系统hosts文件失败:', error)
+      (error) => {}
     );
   }
   
-  /**
-   * 写入系统hosts文件
-   * @param {string} content - hosts文件内容
-   */
   async function writeSystemHosts(content) {
     return withLoading(
       () => window.go.services.ConfigService.WriteSystemHosts(content),
       loading,
       null,
-      (error) => console.error('写入系统hosts文件失败:', error)
+      (error) => {}
     );
   }
   
-  /**
-   * 验证hosts文件内容
-   * @param {string} content - hosts文件内容
-   */
   async function validateHostsContent(content) {
     try {
       await window.go.services.ConfigService.ValidateHostsContent(content);
       return true;
     } catch (error) {
-      console.error('验证hosts文件内容失败:', error);
+
       throw error;
     }
   }
   
-  /**
-   * 检查是否需要管理员权限
-   */
   async function isAdminRequired() {
     try {
       return await window.go.services.ConfigService.IsAdminRequired();
     } catch (error) {
-      console.error('检查管理员权限失败:', error);
+
       return true; // 默认返回需要管理员权限
     }
   }
   
-  /**
-   * 恢复默认的系统hosts文件
-   */
   async function restoreDefaultHosts() {
     loading.value = true;
     try {
       await window.go.services.ConfigService.RestoreDefaultHosts();
     } catch (error) {
-      console.error('恢复默认hosts文件失败:', error);
+
       throw error;
     } finally {
       loading.value = false;
@@ -185,14 +131,11 @@ export const useConfigStore = defineStore('config', () => {
 
 
 
-  /**
-   * 刷新系统DNS缓存
-   */
   async function flushDNSCache() {
     try {
       await window.go.services.ConfigService.FlushDNSCache();
     } catch (error) {
-      console.error('刷新DNS缓存失败:', error);
+
       throw error;
     }
   }

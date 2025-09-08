@@ -113,22 +113,34 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { useThemeStore } from '@/stores/theme';
 import { useNotificationStore } from '@/stores/notification';
+import { useEventManager } from '@/utils/eventManager';
 
-// 状态管理
-const themeStore = useThemeStore();
 const notificationStore = useNotificationStore();
+
+// 事件管理器
+const { addEventListener } = useEventManager();
 
 // 设置状态
 const themeMode = ref('system');
 const openingFile = ref(false);
 const openingDataDir = ref(false);
 
+// 键盘快捷键处理
+const handleKeydown = (event) => {
+  if (event.ctrlKey && event.key === 's') {
+    event.preventDefault();
+    // 可以在这里添加保存设置的逻辑
+  }
+};
+
 // 生命周期钩子
 onMounted(async () => {
   // 初始化主题设置
   initThemeMode();
+  
+  // 使用统一事件管理器添加键盘事件监听
+  addEventListener(document, 'keydown', handleKeydown);
 });
 
 // 监听主题模式变化

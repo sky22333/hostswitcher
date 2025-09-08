@@ -532,11 +532,9 @@ import { ref, onMounted, computed } from 'vue';
 import { useBackupStore } from '@/stores/backup';
 import { useNotificationStore } from '@/stores/notification';
 
-// Store
 const backupStore = useBackupStore();
 const notificationStore = useNotificationStore();
 
-// 响应式数据
 const showCreateBackupDialog = ref(false);
 const showContentPreviewDialog = ref(false);
 const showEditTagsDialog = ref(false);
@@ -558,7 +556,6 @@ const restoring = ref(false);
 const deleting = ref(false);
 const clearingAutoBackups = ref(false);
 
-// 计算属性
 const formatTimestamp = computed(() => {
   return (timestamp) => {
     try {
@@ -575,13 +572,11 @@ const formatTimestamp = computed(() => {
         second: '2-digit'
       });
     } catch (error) {
-      console.error('时间格式化错误:', error);
       return '时间格式错误';
     }
   };
 });
 
-// 过滤后的备份列表
 const filteredBackups = computed(() => {
   if (currentFilter.value === 'all') {
     return backupStore.sortedBackups;
@@ -593,12 +588,11 @@ const filteredBackups = computed(() => {
   return backupStore.sortedBackups;
 });
 
-// 方法
 const refreshBackupsSilently = async () => {
   try {
     await backupStore.loadBackups();
   } catch (error) {
-    console.error('刷新备份列表失败:', error);
+    // 静默处理错误
   }
 };
 
@@ -693,7 +687,6 @@ const deleteBackup = async () => {
   }
 };
 
-// 过滤相关方法
 const setFilter = (filter) => {
   currentFilter.value = filter;
 };
@@ -716,7 +709,6 @@ const getEmptySubMessage = () => {
   return '创建第一个备份来保护您的hosts配置';
 };
 
-// 清理自动备份相关方法
 const confirmClearAutoBackups = () => {
   showClearAutoBackupsDialog.value = true;
 };
@@ -734,25 +726,20 @@ const clearAutoBackups = async () => {
   }
 };
 
-// 生命周期
 onMounted(async () => {
-  // 确保 Go 后端已经准备好
   if (window.go && window.go.services && window.go.services.ConfigService) {
     try {
       await refreshBackupsSilently();
     } catch (error) {
-      console.error('初始化备份数据失败:', error);
       notificationStore.showNotification('初始化备份数据失败: ' + error.message, 'error');
     }
   } else {
-    console.warn('Go 后端服务尚未准备好，延迟加载备份数据');
-    // 延迟尝试
     setTimeout(async () => {
       if (window.go && window.go.services && window.go.services.ConfigService) {
         try {
           await refreshBackupsSilently();
         } catch (error) {
-          console.error('延迟加载备份数据失败:', error);
+          // 静默处理错误
         }
       }
     }, 1000);

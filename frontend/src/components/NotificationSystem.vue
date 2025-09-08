@@ -1,6 +1,7 @@
 <template>
   <v-snackbar
     v-model="notificationStore.show"
+    v-memo="[notificationStore.show, notificationStore.color, notificationStore.text]"
     :color="notificationStore.color"
     :timeout="1000"
     location="bottom right"
@@ -69,4 +70,4 @@ const getIcon = (color) => {
   width: 36px !important;
   height: 36px !important;
 }
-</style> 
+</style>

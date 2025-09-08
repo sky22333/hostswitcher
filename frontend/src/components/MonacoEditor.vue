@@ -12,7 +12,10 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue';
 import { useTheme } from 'vuetify';
-import * as monaco from 'monaco-editor';
+import { useEventManager } from '@/utils/eventManager';
+
+// 懒加载Monaco Editor
+let monaco = null;
 
 // 属性定义
 const props = defineProps({
@@ -51,14 +54,23 @@ let isUpdatingFromProps = false;
 const vuetifyTheme = useTheme();
 const isDarkTheme = computed(() => vuetifyTheme.global.current.value.dark);
 
+// 事件管理器
+const { addEventListener } = useEventManager();
+
 // 生命周期钩子
 onMounted(async () => {
   await nextTick();
+  
+  // 懒加载Monaco Editor
+  if (!monaco) {
+    monaco = await import('monaco-editor');
+  }
+  
   setupMonacoLanguage();
   initEditor();
   
-  // 监听窗口大小变化
-  window.addEventListener('resize', handleResize);
+  // 使用统一事件管理器监听窗口大小变化
+  addEventListener(window, 'resize', handleResize);
 });
 
 onBeforeUnmount(() => {
@@ -72,8 +84,6 @@ onBeforeUnmount(() => {
     editor.dispose();
     editor = null;
   }
-  
-  window.removeEventListener('resize', handleResize);
 });
 
 // 监听属性变化
@@ -90,7 +100,7 @@ watch(() => props.modelValue, (newValue) => {
 });
 
 watch(() => props.language, (newValue) => {
-  if (editor && editor.getModel()) {
+  if (editor && editor.getModel() && monaco) {
     monaco.editor.setModelLanguage(editor.getModel(), newValue);
   }
 });
@@ -103,7 +113,7 @@ watch(() => props.options, (newValue) => {
 
 // 监听主题变化
 watch(isDarkTheme, (newValue) => {
-  if (editor) {
+  if (editor && monaco) {
     applyEditorTheme();
   }
 }, { immediate: true });
@@ -117,7 +127,7 @@ function setupMonacoLanguage() {
 
 // 初始化编辑器
 function initEditor() {
-  if (!editorContainer.value) return;
+  if (!editorContainer.value || !monaco) return;
   
   // 精简的默认选项 - 移除冗余配置
   const defaultOptions = {
@@ -172,13 +182,13 @@ function initEditor() {
     applyEditorTheme();
     
   } catch (error) {
-    console.error('Failed to initialize Monaco Editor:', error);
+    
   }
 }
 
 // 简化的主题应用方法
 function applyEditorTheme() {
-  if (!editor) return;
+  if (!editor || !monaco) return;
   
   const theme = isDarkTheme.value ? 'vs-dark' : 'vs';
   monaco.editor.setTheme(theme);
@@ -193,7 +203,7 @@ function applyEditorTheme() {
 
 // 设置hosts文件语法高亮
 function setupHostsLanguage() {
-  if (!monaco.languages.getLanguages().find(lang => lang.id === 'hosts')) {
+  if (!monaco || !monaco.languages.getLanguages().find(lang => lang.id === 'hosts')) {
     // 注册hosts语言
     monaco.languages.register({ id: 'hosts' });
     
