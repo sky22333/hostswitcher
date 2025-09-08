@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 	"log"
+	"syscall"
+	"unsafe"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -17,16 +20,82 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-// 主函数：应用程序入口点
+// Windows API
+var (
+	kernel32         = syscall.NewLazyDLL("kernel32.dll")
+	user32           = syscall.NewLazyDLL("user32.dll")
+	procCreateMutex  = kernel32.NewProc("CreateMutexW")
+	procCloseHandle  = kernel32.NewProc("CloseHandle")
+	procFindWindow   = user32.NewProc("FindWindowW")
+	procShowWindow   = user32.NewProc("ShowWindow")
+	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
+)
+
+// 激活已运行窗口
+func activateExistingWindow() bool {
+	windowTitle, _ := syscall.UTF16PtrFromString("host 管理工具")
+	hwnd, _, _ := procFindWindow.Call(0, uintptr(unsafe.Pointer(windowTitle)))
+	
+	if hwnd != 0 {
+		procShowWindow.Call(hwnd, 9)
+		procSetForegroundWindow.Call(hwnd)
+		return true
+	}
+	return false
+}
+
+func createSingleInstanceMutex() (syscall.Handle, error) {
+	mutexName, _ := syscall.UTF16PtrFromString("Global\\HostSwitcher_SingleInstance_Mutex")
+	
+	ret, _, err := procCreateMutex.Call(
+		uintptr(0),
+		uintptr(0),
+		uintptr(unsafe.Pointer(mutexName)),
+	)
+	
+	if ret == 0 {
+		return 0, err
+	}
+	
+	if err.(syscall.Errno) == 183 {
+		return 0, fmt.Errorf("应用程序已在运行")
+	}
+	
+	return syscall.Handle(ret), nil
+}
+
+// 释放互斥锁
+func releaseMutex(handle syscall.Handle) {
+	if handle != 0 {
+		procCloseHandle.Call(uintptr(handle))
+	}
+}
+
+
+
+// 应用程序入口
 func main() {
-	// 创建服务实例
+	mutexHandle, err := createSingleInstanceMutex()
+	if err != nil {
+		if activateExistingWindow() {
+			log.Println("程序已在运行，已激活主窗口")
+		} else {
+			log.Println("程序已在运行，请检查系统托盘")
+		}
+		return
+	}
+	
+	defer releaseMutex(mutexHandle)
+	
+	log.Println("启动 Host 管理工具...")
+	// 创建服务
 	tempCtx := context.Background()
 	configService := services.NewConfigService(tempCtx)
 	networkService := services.NewNetworkService(configService)
 	trayService := services.NewTrayService(configService)
 
-	// 初始化服务
-	err := configService.Initialize()
+	// 初始化
+	err = configService.Initialize()
 	if err != nil {
 		log.Fatalf("初始化配置服务失败: %v", err)
 	}
@@ -36,18 +105,14 @@ func main() {
 		log.Fatalf("初始化网络服务失败: %v", err)
 	}
 
-	// 设置托盘服务退出回调
 	trayService.SetOnExit(func() {
-		// 应用退出时清理资源
 		configService.Cleanup()
 		networkService.Cleanup()
 		trayService.Cleanup()
 		
-		// 退出应用
 		runtime.Quit(trayService.GetContext())
 	})
 
-	// 创建应用
 	app := wails.Run(&options.App{
 		Title:             "host 管理工具",
 		Width:             1200,
@@ -58,25 +123,20 @@ func main() {
 		Fullscreen:        false,
 		Frameless:         false,
 		StartHidden:       false,
-		HideWindowOnClose: true,  // 关闭时隐藏到托盘
+		HideWindowOnClose: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 32, G: 32, B: 32, A: 1},
 		OnStartup: func(ctx context.Context) {
-			// 设置服务上下文
 			configService.SetContext(ctx)
 			networkService.SetContext(ctx)
 			trayService.SetContext(ctx)
 			
-			// 在应用启动后再启动托盘服务
 			go trayService.Start()
 		},
 		OnShutdown: func(ctx context.Context) {
-			// 停止托盘图标
 			trayService.Stop()
-			
-			// 清理资源
 			configService.Cleanup()
 			networkService.Cleanup()
 			trayService.Cleanup()

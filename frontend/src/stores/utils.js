@@ -1,15 +1,3 @@
-/**
- * Store工具函数 - 减少重复的异步操作模式
- */
-
-/**
- * 通用异步操作包装器
- * @param {Function} operation - 要执行的异步操作
- * @param {Object} loadingRef - loading状态的ref
- * @param {Function} onSuccess - 成功后的回调函数（可选）
- * @param {Function} onError - 错误处理函数（可选）
- * @returns {Promise} 操作结果
- */
 export async function withLoading(operation, loadingRef, onSuccess = null, onError = null) {
   loadingRef.value = true;
   try {
@@ -30,14 +18,7 @@ export async function withLoading(operation, loadingRef, onSuccess = null, onErr
   }
 }
 
-/**
- * 带重新加载的异步操作包装器
- * @param {Function} operation - 要执行的异步操作
- * @param {Object} loadingRef - loading状态的ref
- * @param {Function} reloadFunction - 重新加载函数
- * @param {Function} onError - 错误处理函数（可选）
- * @returns {Promise} 操作结果
- */
+
 export async function withLoadingAndReload(operation, loadingRef, reloadFunction, onError = null) {
   return withLoading(
     operation,

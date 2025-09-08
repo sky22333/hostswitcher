@@ -17,7 +17,7 @@ import (
 	"hostswitcher/backend/models"
 )
 
-// 嵌入图标文件到程序中
+
 //go:embed assets/appicon.ico
 var iconDataWin []byte
 
@@ -27,7 +27,7 @@ var iconDataMac []byte
 //go:embed assets/appicon.png
 var iconDataLinux []byte
 
-// TrayService 处理系统托盘相关操作的服务
+// TrayService 系统托盘服务
 type TrayService struct {
 	ctx           context.Context
 	configService *ConfigService
@@ -35,18 +35,18 @@ type TrayService struct {
 	activeConfig  *models.Config
 	isRunning     bool
 	onExit        func()
-	mutex         sync.RWMutex // 添加互斥锁保护并发访问
-	stopChan      chan struct{} // 用于停止后台goroutine的通道
+	mutex         sync.RWMutex
+	stopChan      chan struct{}
 }
 
-// NewTrayService 创建一个新的托盘服务实例
+// NewTrayService 创建托盘服务
 func NewTrayService(configService *ConfigService) *TrayService {
 	return &TrayService{
 		configService: configService,
 		configs:       []*models.Config{},
 		isRunning:     false,
-		mutex:         sync.RWMutex{}, // 初始化互斥锁
-		stopChan:      make(chan struct{}), // 初始化stop channel
+		mutex:         sync.RWMutex{},
+		stopChan:      make(chan struct{}),
 	}
 }
 

@@ -12,14 +12,14 @@
               <v-list>
 
                 
-                <!-- 系统 Hosts 文件 -->
+
                 <v-list-subheader>系统 Hosts 文件</v-list-subheader>
                 <v-list-item>
                   <template v-slot:prepend>
                     <v-icon icon="mdi-file-cog"></v-icon>
                   </template>
                   <v-list-item-title>打开系统Hosts文件</v-list-item-title>
-                  <v-list-item-subtitle>在系统默认编辑器中打开</v-list-item-subtitle>
+
                   <template v-slot:append>
                     <v-btn
                       color="primary"
@@ -38,7 +38,7 @@
                     <v-icon icon="mdi-folder-open"></v-icon>
                   </template>
                   <v-list-item-title>打开用户本地数据目录</v-list-item-title>
-                  <v-list-item-subtitle>打开应用数据存储目录</v-list-item-subtitle>
+
                   <template v-slot:append>
                     <v-btn
                       color="primary"
@@ -54,14 +54,14 @@
                 
                 <v-divider></v-divider>
                 
-                <!-- 关于 -->
+
                 <v-list-subheader>关于</v-list-subheader>
                 <v-list-item>
                   <template v-slot:prepend>
                     <v-icon icon="mdi-github"></v-icon>
                   </template>
                   <v-list-item-title>GitHub</v-list-item-title>
-                  <v-list-item-subtitle>查看源代码和贡献</v-list-item-subtitle>
+
                   <template v-slot:append>
                     <v-btn
                       color="primary"
@@ -88,14 +88,14 @@ import { useEventManager } from '@/utils/eventManager';
 
 const notificationStore = useNotificationStore();
 
-// 事件管理器
+
 const { addEventListener } = useEventManager();
 
-// 设置状态
+
 const openingFile = ref(false);
 const openingDataDir = ref(false);
 
-// 键盘快捷键处理
+
 const handleKeydown = (event) => {
   if (event.ctrlKey && event.key === 's') {
     event.preventDefault();

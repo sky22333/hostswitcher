@@ -14,7 +14,7 @@
                 @click="refreshRemoteSources"
                 :loading="remoteStore.loading"
                 :disabled="remoteStore.loading"
-                title="刷新远程源"
+                title="刷新"
               ></v-btn>
               <v-btn
                 color="primary"
@@ -83,7 +83,7 @@
                         @click="applyDirectlyToSystem(source)"
                         :loading="applyingSourceId === source.ID"
                         :disabled="remoteStore.loading"
-                        title="直接应用到系统hosts文件"
+                        title="直接应用"
                         size="small"
                       >
                         直接应用

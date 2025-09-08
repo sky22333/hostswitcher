@@ -18,37 +18,37 @@ import (
 	"hostswitcher/backend/models"
 )
 
-// NetworkService 处理网络相关操作的服务
+// NetworkService 网络服务
 type NetworkService struct {
 	ctx           context.Context
 	configService *ConfigService
 	remoteSources []*models.RemoteSource
 	remoteFile    string
-	httpClient    *http.Client // 复用HTTP客户端
+	httpClient    *http.Client
 }
 
-// NewNetworkService 创建一个新的网络服务实例
+// NewNetworkService 创建网络服务
 func NewNetworkService(configService *ConfigService) *NetworkService {
-	// 获取用户目录
+
 	userDir, err := os.UserHomeDir()
 	if err != nil {
 		userDir = "."
 	}
 
-	// 使用统一的应用数据目录
+
 	appDir := filepath.Join(userDir, ".hosts-manager")
 	remoteFile := filepath.Join(appDir, "remote_sources.json")
 
-	// 确保目录存在
+
 	os.MkdirAll(appDir, 0755)
 
-	// 创建带有超时设置的HTTP客户端
+
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
-			MaxIdleConns:        100,              // 最大空闲连接数
-			MaxIdleConnsPerHost: 10,               // 每个主机的最大空闲连接数
-			IdleConnTimeout:     90 * time.Second, // 空闲连接超时时间
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     90 * time.Second,
 		},
 	}
 
@@ -66,17 +66,17 @@ func (s *NetworkService) SetContext(ctx context.Context) {
 	s.ctx = ctx
 }
 
-// Initialize 初始化服务
+// Initialize 初始化
 func (s *NetworkService) Initialize() error {
-	// 尝试从文件加载远程源
+
 	if err := s.loadRemoteSources(); err != nil {
-		// 如果加载失败，初始化为空列表
+
 		s.remoteSources = []*models.RemoteSource{}
 	}
 	
-	// 延迟启动自动更新，确保服务完全初始化
+
 	go func() {
-		// 等待一段时间确保所有服务都已初始化
+
 		time.Sleep(3 * time.Second)
 		s.updateStartupSources()
 	}()
@@ -84,9 +84,9 @@ func (s *NetworkService) Initialize() error {
 	return nil
 }
 
-// findRemoteSource 查找远程源的通用方法
+// findRemoteSource 查找远程源
 func (s *NetworkService) findRemoteSource(id string) (*models.RemoteSource, error) {
-	// 验证ID
+
 	if strings.TrimSpace(id) == "" {
 		return nil, errors.New("远程源ID不能为空")
 	}

@@ -66,7 +66,7 @@ export const useBackupStore = defineStore('backup', () => {
       await loadStats();
     } catch (error) {
 
-      // 重置为默认值而不是抛出错误
+
       backups.value = [];
       stats.value = {
         total: 0,

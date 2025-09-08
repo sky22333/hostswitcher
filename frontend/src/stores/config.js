@@ -11,10 +11,10 @@ export const useConfigStore = defineStore('config', () => {
   
   const sortedConfigs = computed(() => {
     return [...configs.value].sort((a, b) => {
-      // 激活的配置排在最前面
+
       if (a.IsActive && !b.IsActive) return -1;
       if (!a.IsActive && b.IsActive) return 1;
-      // 其次按更新时间排序
+
       return new Date(b.UpdatedAt.Time) - new Date(a.UpdatedAt.Time);
     });
   });
@@ -22,7 +22,7 @@ export const useConfigStore = defineStore('config', () => {
   async function initialize() {
     try {
       systemHostsPath.value = await window.go.services.ConfigService.GetSystemHostsPath();
-      // 检查管理员权限
+
       const needsAdmin = await window.go.services.ConfigService.IsAdminRequired();
       isAdminMode.value = !needsAdmin;
       await loadConfigs();

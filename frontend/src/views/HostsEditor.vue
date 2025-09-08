@@ -32,7 +32,7 @@
                   
                   <ToolbarButton
                     icon="mdi-restore"
-                    tooltip="恢复默认hosts文件，清除所有自定义配置。"
+                    tooltip="恢复默认hosts文件"
                     :disabled="loading || saving || restoring || flushing"
                     button-class="icon-btn warning-btn"
                     @click="showRestoreDialog = true"
@@ -40,7 +40,7 @@
                   
                   <ToolbarButton
                     icon="mdi-refresh"
-                    tooltip="刷新内容，重新加载当前hosts文件。"
+                    tooltip="刷新内容"
                     :loading="loading"
                     :disabled="loading || saving || restoring || flushing"
                     @click="refreshContent"
@@ -48,7 +48,7 @@
                   
                   <ToolbarButton
                     icon="mdi-dns"
-                    tooltip="刷新DNS缓存，清除系统域名解析缓存。"
+                    tooltip="刷新DNS缓存"
                     :loading="flushing"
                     :disabled="loading || saving || restoring || flushing"
                     button-class="icon-btn info-btn"
@@ -57,7 +57,7 @@
                   
                   <ToolbarButton
                     icon="mdi-check-circle-outline"
-                    tooltip="验证内容格式，检查hosts文件语法。"
+                    tooltip="验证内容格式"
                     :disabled="!editorContent || loading || saving || restoring || flushing"
                     @click="validateContent"
                   />
@@ -65,7 +65,7 @@
 
                   <ToolbarButton
                     icon="mdi-content-save"
-                    tooltip="保存更改，将内容写入hosts文件。"
+                    tooltip="保存更改"
                     :loading="saving"
                     :disabled="!hasChanges || saving || restoring || flushing"
                     button-class="icon-btn primary-btn"
@@ -416,13 +416,13 @@ const saveContent = async () => {
   saving.value = true;
   try {
     if (selectedConfigId.value === 'system') {
-      // 检查管理员权限
+
       if (needsAdmin.value) {
         showPermissionDialog.value = true;
         return;
       }
       
-      // 验证内容
+
       await configStore.validateHostsContent(editorContent.value);
       
       await configStore.writeSystemHosts(editorContent.value);
@@ -430,7 +430,7 @@ const saveContent = async () => {
       originalContent.value = editorContent.value;
       notificationStore.showNotification('系统 hosts 文件已保存', 'success');
     } else {
-      // 保存到配置
+
       const config = selectedConfig.value;
       if (config) {
         await configStore.updateConfig(
@@ -492,7 +492,7 @@ const handleUnsavedChanges = async (save) => {
 };
 
 const onEditorChange = () => {
-  // 编辑器内容变化时的处理
+
 };
 
 const checkAdminPermission = async () => {

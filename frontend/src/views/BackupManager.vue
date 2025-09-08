@@ -1,7 +1,7 @@
 <template>
   <div class="backup-manager">
     <v-container fluid class="pa-0">
-      <!-- 顶部统计卡片 -->
+
       <v-row class="mb-4">
         <v-col cols="12" md="3">
           <v-card 
@@ -78,7 +78,7 @@
         </v-col>
       </v-row>
 
-      <!-- 操作工具栏 -->
+
       <v-card elevation="0" class="mb-4" rounded="lg">
         <v-card-text class="py-3">
           <v-row align="center" no-gutters>

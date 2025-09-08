@@ -17,7 +17,7 @@ import (
 	"hostswitcher/backend/models"
 )
 
-// BackupService 处理备份相关操作的服务
+// BackupService 备份服务
 type BackupService struct {
 	ctx        context.Context
 	appDir     string
@@ -25,11 +25,11 @@ type BackupService struct {
 	maxBackups int
 }
 
-// NewBackupService 创建一个新的备份服务实例
+// NewBackupService 创建备份服务
 func NewBackupService(appDir string) *BackupService {
 	backupFile := filepath.Join(appDir, "backups.json")
 	
-	// 创建应用目录
+
 	err := os.MkdirAll(appDir, 0755)
 	if err != nil {
 		fmt.Printf("创建应用目录失败: %v\n", err)
@@ -38,7 +38,7 @@ func NewBackupService(appDir string) *BackupService {
 	return &BackupService{
 		appDir:     appDir,
 		backupFile: backupFile,
-		maxBackups: 99, // 最多保留99个自动备份
+		maxBackups: 99,
 	}
 }
 
@@ -47,7 +47,7 @@ func (s *BackupService) SetContext(ctx context.Context) {
 	s.ctx = ctx
 }
 
-// calculateHash 计算内容的MD5哈希
+// calculateHash 计算MD5哈希
 func (s *BackupService) calculateHash(content string) string {
 	hash := md5.Sum([]byte(content))
 	return hex.EncodeToString(hash[:])
@@ -369,4 +369,4 @@ func (s *BackupService) ClearAllAutoBackups() error {
 	}
 
 	return nil
-} 
+}

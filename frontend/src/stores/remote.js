@@ -11,7 +11,7 @@ export const useRemoteStore = defineStore('remote', () => {
       return null;
     }
     
-    // 创建标准化的数据对象
+
     const normalized = {
       ID: source.ID || source.id || '',
       Name: source.Name || source.name || '',
@@ -22,18 +22,18 @@ export const useRemoteStore = defineStore('remote', () => {
       Status: source.Status || source.status || 'pending'
     };
     
-    // 数据清洗和验证
+
     try {
       if (normalized.ID) {
       normalized.ID = normalized.ID.toString().trim();
     }
     
-    // 清理Name字段，移除危险字符
+
       if (normalized.Name) {
         normalized.Name = String(normalized.Name)
           .trim()
-          .replace(/[\x00-\x1f\x7f]/g, '') // 移除控制字符
-          .substring(0, 100); // 限制长度
+          .replace(/[\x00-\x1f\x7f]/g, '')
+          .substring(0, 100);
       }
       
       if (normalized.URL) {
@@ -50,7 +50,7 @@ export const useRemoteStore = defineStore('remote', () => {
         normalized.Status = 'pending';
       }
       
-      // 验证必需字段
+
       if (!normalized.ID || !normalized.Name || !normalized.URL) {
         return null;
       }
@@ -64,7 +64,7 @@ export const useRemoteStore = defineStore('remote', () => {
 
   function normalizeRemoteSourceArray(sources) {
     if (!Array.isArray(sources)) {
-      // 尝试转换单个对象为数组
+
       if (sources && typeof sources === 'object') {
         sources = [sources];
       } else {

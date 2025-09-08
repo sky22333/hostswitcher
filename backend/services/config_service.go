@@ -21,32 +21,15 @@ import (
 	"hostswitcher/backend/models"
 )
 
-// 默认的hosts文件内容常量
 const defaultHostsContent = `# Copyright (c) 1993-2009 Microsoft Corp.
 #
 # This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
 #
-# This file contains the mappings of IP addresses to host names. Each
-# entry should be kept on an individual line. The IP address should
-# be placed in the first column followed by the corresponding host name.
-# The IP address and the host name should be separated by at least one
-# space.
-#
-# Additionally, comments (such as these) may be inserted on individual
-# lines or following the machine name denoted by a '#' symbol.
-#
-# For example:
-#
-#      102.54.94.97     rhino.acme.com          # source server
-#       38.25.63.10     x.acme.com              # x client host
-
-# localhost name resolution is handled within DNS itself.
-
 127.0.0.1       localhost
 ::1             localhost
 `
 
-// ConfigService 处理 hosts 配置的服务
+// ConfigService hosts配置服务
 type ConfigService struct {
 	ctx           context.Context
 	configs       []*models.Config
@@ -56,22 +39,22 @@ type ConfigService struct {
 	backupService *BackupService
 }
 
-// NewConfigService 创建一个新的配置服务实例
+// NewConfigService 创建配置服务
 func NewConfigService(ctx context.Context) *ConfigService {
-	// 获取用户主目录
+
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Printf("获取用户主目录失败: %v", err)
 		homeDir = "."
 	}
 
-	// 创建应用目录
+
 	appDir := filepath.Join(homeDir, ".hosts-manager")
 
-	// 创建必要的目录
+
 	os.MkdirAll(appDir, 0755)
 
-	// 获取系统hosts文件路径
+
 	var systemHosts string
 	switch runtime.GOOS {
 	case "windows":
@@ -82,12 +65,12 @@ func NewConfigService(ctx context.Context) *ConfigService {
 		systemHosts = "/etc/hosts"
 	}
 
-	// 验证系统hosts文件是否存在
+
 	if _, err := os.Stat(systemHosts); err != nil {
 		log.Printf("系统hosts文件不存在: %s", systemHosts)
 	}
 
-	// 创建备份服务
+
 	backupService := NewBackupService(appDir)
 	backupService.SetContext(ctx)
 
@@ -102,7 +85,7 @@ func NewConfigService(ctx context.Context) *ConfigService {
 	return service
 }
 
-// GetOSType 获取操作系统类型
+// GetOSType 获取操作系统
 func GetOSType() string {
 	return runtime.GOOS
 }
@@ -111,20 +94,20 @@ func GetOSType() string {
 // wails:ignore
 func (s *ConfigService) SetContext(ctx context.Context) {
 	s.ctx = ctx
-	// 同时更新备份服务的上下文
+
 	if s.backupService != nil {
 		s.backupService.SetContext(ctx)
 	}
 }
 
-// Initialize 初始化服务
+// Initialize 初始化
 func (s *ConfigService) Initialize() error {
-	// 尝试加载已保存的配置
+
 	if err := s.loadConfigs(); err != nil {
 		s.configs = []*models.Config{}
 	}
 	
-	// 查找激活的配置
+
 	for _, config := range s.configs {
 		if config.IsActive {
 			s.activeConfig = config
@@ -135,31 +118,31 @@ func (s *ConfigService) Initialize() error {
 	return nil
 }
 
-// loadConfigs 从文件加载配置
+// loadConfigs 加载配置
 func (s *ConfigService) loadConfigs() error {
-	// 创建配置文件路径
+
 	configFile := filepath.Join(s.appDir, "configs.json")
 	
-	// 检查配置文件是否存在
+
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		// 文件不存在，初始化为空列表
+
 		s.configs = []*models.Config{}
 		return nil
 	}
 
-	// 读取配置文件
+
 	data, err := os.ReadFile(configFile)
 	if err != nil {
 		return err
 	}
 
-	// 反序列化配置
+
 	err = json.Unmarshal(data, &s.configs)
 	if err != nil {
 		return err
 	}
 
-	// 如果配置为nil，初始化为空列表
+
 	if s.configs == nil {
 		s.configs = []*models.Config{}
 	}
@@ -172,7 +155,7 @@ func (s *ConfigService) GetAllConfigs() []*models.Config {
 	return s.configs
 }
 
-// GetActiveConfig 获取当前激活的配置
+// GetActiveConfig 获取激活配置
 func (s *ConfigService) GetActiveConfig() *models.Config {
 	return s.activeConfig
 }
@@ -187,9 +170,9 @@ func (s *ConfigService) GetConfigByID(id string) (*models.Config, error) {
 	return nil, errors.New("配置不存在")
 }
 
-// CreateConfig 创建新配置
+// CreateConfig 创建配置
 func (s *ConfigService) CreateConfig(name, description, content string) (*models.Config, error) {
-	// 验证必要参数
+
 	if strings.TrimSpace(name) == "" {
 		return nil, errors.New("配置名称不能为空")
 	}
@@ -197,7 +180,7 @@ func (s *ConfigService) CreateConfig(name, description, content string) (*models
 		return nil, errors.New("配置内容不能为空")
 	}
 	
-	// 创建新配置
+
 	newConfig := &models.Config{
 		ID:          uuid.New().String(),
 		Name:        name,
@@ -209,16 +192,16 @@ func (s *ConfigService) CreateConfig(name, description, content string) (*models
 		UpdatedAt:   models.GetCurrentTimeRFC3339(),
 	}
 
-	// 添加到配置列表
+
 	s.configs = append(s.configs, newConfig)
 
-	// 保存配置
+
 	err := s.saveConfigs()
 	if err != nil {
 		return nil, err
 	}
 
-	// 通知前端配置列表已更新
+
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "config-list-changed")
 	}
@@ -228,7 +211,7 @@ func (s *ConfigService) CreateConfig(name, description, content string) (*models
 
 // UpdateConfig 更新配置
 func (s *ConfigService) UpdateConfig(id, name, description, content string) (*models.Config, error) {
-	// 验证必要参数
+
 	if strings.TrimSpace(id) == "" {
 		return nil, errors.New("配置ID不能为空")
 	}
@@ -239,7 +222,7 @@ func (s *ConfigService) UpdateConfig(id, name, description, content string) (*mo
 		return nil, errors.New("配置内容不能为空")
 	}
 	
-	// 查找配置
+
 	var config *models.Config
 	for _, c := range s.configs {
 		if c.ID == id {
@@ -252,7 +235,7 @@ func (s *ConfigService) UpdateConfig(id, name, description, content string) (*mo
 		return nil, errors.New("配置不存在")
 	}
 
-	// 更新配置
+
 	config.Name = name
 	config.Description = description
 	config.Content = content
@@ -274,12 +257,12 @@ func (s *ConfigService) UpdateConfig(id, name, description, content string) (*mo
 
 // DeleteConfig 删除配置
 func (s *ConfigService) DeleteConfig(id string) error {
-	// 不能删除激活的配置
+
 	if s.activeConfig != nil && s.activeConfig.ID == id {
 		return errors.New("不能删除当前激活的配置")
 	}
 
-	// 查找配置索引
+
 	index := -1
 	for i, config := range s.configs {
 		if config.ID == id {
@@ -292,7 +275,7 @@ func (s *ConfigService) DeleteConfig(id string) error {
 		return errors.New("配置不存在")
 	}
 
-	// 删除配置
+
 	s.configs = append(s.configs[:index], s.configs[index+1:]...)
 
 	// 保存配置
