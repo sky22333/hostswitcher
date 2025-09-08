@@ -10,37 +10,7 @@
             
             <v-card-text>
               <v-list>
-                <!-- 主题设置 -->
-                <v-list-subheader>外观</v-list-subheader>
-                <v-list-item>
-                  <template v-slot:prepend>
-                    <v-icon icon="mdi-theme-light-dark"></v-icon>
-                  </template>
-                  <v-list-item-title>主题</v-list-item-title>
-                  <template v-slot:append>
-                    <v-btn-toggle
-                      v-model="themeMode"
-                      color="primary"
-                      rounded="lg"
-                      density="comfortable"
-                    >
-                      <v-btn value="light">
-                        <v-icon>mdi-weather-sunny</v-icon>
-                        亮色
-                      </v-btn>
-                      <v-btn value="dark">
-                        <v-icon>mdi-weather-night</v-icon>
-                        暗色
-                      </v-btn>
-                      <v-btn value="system">
-                        <v-icon>mdi-desktop-tower-monitor</v-icon>
-                        跟随系统
-                      </v-btn>
-                    </v-btn-toggle>
-                  </template>
-                </v-list-item>
-                
-                <v-divider></v-divider>
+
                 
                 <!-- 系统 Hosts 文件 -->
                 <v-list-subheader>系统 Hosts 文件</v-list-subheader>
@@ -122,7 +92,6 @@ const notificationStore = useNotificationStore();
 const { addEventListener } = useEventManager();
 
 // 设置状态
-const themeMode = ref('system');
 const openingFile = ref(false);
 const openingDataDir = ref(false);
 
@@ -136,44 +105,11 @@ const handleKeydown = (event) => {
 
 // 生命周期钩子
 onMounted(async () => {
-  // 初始化主题设置
-  initThemeMode();
-  
   // 使用统一事件管理器添加键盘事件监听
   addEventListener(document, 'keydown', handleKeydown);
 });
 
-// 监听主题模式变化
-watch(themeMode, (newMode) => {
-  applyThemeMode(newMode);
-});
 
-// 初始化主题模式
-function initThemeMode() {
-  const savedMode = localStorage.getItem('themeMode');
-  if (savedMode) {
-    themeMode.value = savedMode;
-  } else {
-    // 默认跟随系统
-    themeMode.value = 'system';
-  }
-  applyThemeMode(themeMode.value);
-}
-
-// 应用主题模式
-function applyThemeMode(mode) {
-  localStorage.setItem('themeMode', mode);
-  
-  if (mode === 'system') {
-    // 检测系统主题
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    themeStore.setTheme(prefersDark ? 'darkTheme' : 'lightTheme');
-  } else if (mode === 'dark') {
-    themeStore.setTheme('darkTheme');
-  } else {
-    themeStore.setTheme('lightTheme');
-  }
-}
 
 // 打开系统Hosts文件
 async function openSystemHostsFile() {
@@ -244,8 +180,5 @@ async function openGithub() {
   font-size: 1rem;
 }
 
-/* 深色主题适配 */
-.v-theme--darkTheme .v-list-item:hover {
-  background: rgba(var(--v-theme-primary), 0.08);
-}
+
 </style>

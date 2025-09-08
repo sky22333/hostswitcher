@@ -152,9 +152,11 @@ hostswitcher/
 │   │   │   ├── 📄 MonacoEditor.vue      # 代码编辑器组件
 │   │   │   └── 📄 NotificationSystem.vue # 通知系统组件
 │   │   ├── 📁 stores/         # Pinia 状态管理
+│   │   │   ├── 📄 backup.js   # 备份状态管理
 │   │   │   ├── 📄 config.js   # 配置状态管理
 │   │   │   ├── 📄 notification.js # 通知状态管理
-│   │   │   └── 📄 theme.js    # 主题状态管理
+│   │   │   ├── 📄 remote.js   # 远程源状态管理
+│   │   │   └── 📄 utils.js    # 工具函数
 │   │   ├── 📁 views/          # 页面视图
 │   │   │   ├── 📄 HostsEditor.vue # Hosts 编辑器页面
 │   │   │   ├── 📄 RemoteHosts.vue # 远程源管理页面

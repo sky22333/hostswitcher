@@ -33,23 +33,7 @@ const lightTheme = {
   }
 }
 
-const darkTheme = {
-  dark: true,
-  colors: {
-    background: '#1a1a1a',
-    surface: '#2a2a2a',
-    primary: '#60cdff',
-    'primary-darken-1': '#4db8e8',
-    secondary: '#b4a0ff',
-    'secondary-darken-1': '#9080d9',
-    error: '#ff6b6b',
-    info: '#60cdff',
-    success: '#51cf66',
-    warning: '#ffd43b',
-    'on-surface': '#ffffff',
-    'surface-variant': '#3a3a3a',
-  }
-}
+
 
 // 创建 Vuetify 实例
 const vuetify = createVuetify({
@@ -66,7 +50,6 @@ const vuetify = createVuetify({
     defaultTheme: 'lightTheme',
     themes: {
       lightTheme,
-      darkTheme,
     },
   },
   defaults: {
@@ -118,14 +101,8 @@ app.use(vuetify)
 // 挂载应用
 app.mount('#app')
 
-// 在应用挂载后立即初始化主题和配置
+// 在应用挂载后立即初始化配置
 nextTick(() => {
-  // 导入主题store并初始化
-  import('./stores/theme').then(({ useThemeStore }) => {
-    const themeStore = useThemeStore()
-    themeStore.initTheme()
-  })
-  
   // 初始化配置store
   if (window.runtime && window.runtime.EventsOn) {
     import('./stores/config').then(({ useConfigStore }) => {

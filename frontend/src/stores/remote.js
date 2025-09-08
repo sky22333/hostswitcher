@@ -8,7 +8,6 @@ export const useRemoteStore = defineStore('remote', () => {
 
   function normalizeRemoteSource(source) {
     if (!source || typeof source !== 'object') {
-      console.warn('RemoteStore: 无效的远程源数据:', source);
       return null;
     }
     
@@ -58,7 +57,6 @@ export const useRemoteStore = defineStore('remote', () => {
       
       return normalized;
     } catch (error) {
-      console.error('RemoteStore: 数据标准化失败:', error, source);
       return null;
     }
   }
@@ -87,7 +85,6 @@ export const useRemoteStore = defineStore('remote', () => {
   
 
   function handleError(operation, error) {
-    console.error(`RemoteStore: ${operation}失败:`, error);
     const message = error.message || error.toString();
     throw new Error(message);
   }
@@ -137,7 +134,6 @@ export const useRemoteStore = defineStore('remote', () => {
       
       remoteSources.value = normalizedSources;
     } catch (error) {
-      console.error('RemoteStore: 加载远程源失败:', error);
       remoteSources.value = [];
       throw error;
     } finally {

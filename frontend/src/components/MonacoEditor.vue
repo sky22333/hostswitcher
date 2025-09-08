@@ -10,8 +10,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue';
-import { useTheme } from 'vuetify';
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 import { useEventManager } from '@/utils/eventManager';
 
 // 懒加载Monaco Editor
@@ -50,9 +49,7 @@ let editor = null;
 let contentChangeDisposable = null;
 let isUpdatingFromProps = false;
 
-// 主题相关
-const vuetifyTheme = useTheme();
-const isDarkTheme = computed(() => vuetifyTheme.global.current.value.dark);
+
 
 // 事件管理器
 const { addEventListener } = useEventManager();
@@ -111,12 +108,7 @@ watch(() => props.options, (newValue) => {
   }
 }, { deep: true });
 
-// 监听主题变化
-watch(isDarkTheme, (newValue) => {
-  if (editor && monaco) {
-    applyEditorTheme();
-  }
-}, { immediate: true });
+
 
 function setupMonacoLanguage() {
   // 简化的语言配置
@@ -131,7 +123,7 @@ function initEditor() {
   
   // 精简的默认选项 - 移除冗余配置
   const defaultOptions = {
-    theme: isDarkTheme.value ? 'vs-dark' : 'vs',
+    theme: 'vs',
     fontSize: 14,
     wordWrap: 'on',
     automaticLayout: true,
@@ -186,20 +178,7 @@ function initEditor() {
   }
 }
 
-// 简化的主题应用方法
-function applyEditorTheme() {
-  if (!editor || !monaco) return;
-  
-  const theme = isDarkTheme.value ? 'vs-dark' : 'vs';
-  monaco.editor.setTheme(theme);
-  
-  // 延迟布局确保主题应用完成
-  setTimeout(() => {
-    if (editor) {
-      editor.layout();
-    }
-  }, 50);
-}
+
 
 // 设置hosts文件语法高亮
 function setupHostsLanguage() {

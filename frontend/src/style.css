@@ -138,8 +138,3 @@ html, body, #app {
   max-width: 300px !important;
   word-wrap: break-word !important;
 }
-
-/* 深色主题tooltip保持相同样式 */
-.v-theme--dark .v-tooltip .v-overlay__content {
-  background: rgba(0, 0, 0, 0.9) !important;
-}

@@ -209,12 +209,5 @@ onMounted(async () => {
   padding: 16px;
 }
 
-/* 深色主题适配 */
-.v-theme--dark .sidebar-custom {
-  background: rgb(var(--v-theme-surface));
-}
 
-.v-theme--dark .main-app-bar {
-  background: rgba(var(--v-theme-surface-bright), 0.9) !important;
-}
 </style>

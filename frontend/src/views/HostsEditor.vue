@@ -638,15 +638,7 @@ watch(selectedConfigId, (newVal, oldVal) => {
   background: rgba(var(--v-theme-on-surface), 0.08) !important;
 }
 
-/* 深色主题适配 */
-.v-theme--darkTheme .editor-toolbar,
-.v-theme--darkTheme .editor-main {
-  border-color: rgba(255, 255, 255, 0.12);
-}
 
-.v-theme--darkTheme .editor-statusbar {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
 
 /* 现代化对话框样式 */
 .modern-dialog {
@@ -673,13 +665,5 @@ watch(selectedConfigId, (newVal, oldVal) => {
   letter-spacing: 0.02em !important;
 }
 
-/* 暗色主题对话框 */
-.v-theme--darkTheme .modern-dialog {
-  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3), 
-              0 12px 36px rgba(0, 0, 0, 0.15) !important;
-}
 
-.v-theme--darkTheme .modern-dialog .v-card-actions {
-  background: rgba(var(--v-theme-surface), 0.4) !important;
-}
 </style>
