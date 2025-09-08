@@ -108,7 +108,7 @@ func main() {
 
 	app := wails.Run(&options.App{
 		Title:             "host 管理工具",
-		Width:             1200,
+		Width:             1020,
 		Height:            800,
 		MinWidth:          900,
 		MinHeight:         600,

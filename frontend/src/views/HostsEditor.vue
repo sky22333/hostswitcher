@@ -108,7 +108,7 @@
               language="hosts"
               :options="editorOptions"
               @change="onEditorChange"
-              height="calc(100vh - 280px)"
+              height="calc(100vh - 240px)"
             />
           </div>
         </v-card-text>

@@ -3,7 +3,7 @@
     <!-- 侧边栏 -->
     <v-navigation-drawer
       permanent
-      width="240"
+      width="200"
       class="sidebar-custom"
     >
       <!-- 导航菜单 -->
