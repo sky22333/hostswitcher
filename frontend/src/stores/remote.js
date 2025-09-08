@@ -84,13 +84,13 @@ export const useRemoteStore = defineStore('remote', () => {
   }
   
 
-  function handleError(operation, error) {
+  function handleError(error) {
     const message = error.message || error.toString();
     throw new Error(message);
   }
   
 
-  function validateSourceId(id, operation = '操作') {
+  function validateSourceId(id) {
     if (!id || typeof id !== 'string' || id.trim() === '') {
       throw new Error('远程源ID无效');
     }
@@ -151,7 +151,7 @@ export const useRemoteStore = defineStore('remote', () => {
       await loadRemoteSources();
       return newSource;
     } catch (error) {
-      handleError('添加远程源', error);
+      handleError(error);
     } finally {
       loading.value = false;
     }
@@ -167,7 +167,7 @@ export const useRemoteStore = defineStore('remote', () => {
       await loadRemoteSources();
       return updatedSource;
     } catch (error) {
-      handleError('更新远程源', error);
+      handleError(error);
     } finally {
       loading.value = false;
     }
@@ -183,7 +183,7 @@ export const useRemoteStore = defineStore('remote', () => {
       
       await loadRemoteSources();
     } catch (error) {
-      handleError('删除远程源', error);
+      handleError(error);
     } finally {
       loading.value = false;
     }
@@ -191,10 +191,7 @@ export const useRemoteStore = defineStore('remote', () => {
   
 
   async function fetchRemoteHosts(id) {
-
-    
-    const source = validateSourceId(id, '获取远程内容');
-    
+    validateSourceId(id);
     
     loading.value = true;
     try {
@@ -202,7 +199,7 @@ export const useRemoteStore = defineStore('remote', () => {
 
       return content;
     } catch (error) {
-      handleError('获取远程hosts内容', error);
+      handleError(error);
     } finally {
       loading.value = false;
     }
@@ -210,10 +207,7 @@ export const useRemoteStore = defineStore('remote', () => {
   
 
   async function createConfigFromRemote(id) {
-
-    
-    const source = validateSourceId(id, '创建配置');
-    
+    validateSourceId(id);
     
     loading.value = true;
     try {
@@ -221,7 +215,7 @@ export const useRemoteStore = defineStore('remote', () => {
 
       return config;
     } catch (error) {
-      handleError('从远程源创建配置', error);
+      handleError(error);
     } finally {
       loading.value = false;
     }
@@ -234,7 +228,7 @@ export const useRemoteStore = defineStore('remote', () => {
       await window.go.services.NetworkService.UpdateAllRemoteSources();
       await loadRemoteSources();
     } catch (error) {
-      handleError('更新所有远程源', error);
+      handleError(error);
     } finally {
       loading.value = false;
     }
@@ -242,17 +236,14 @@ export const useRemoteStore = defineStore('remote', () => {
   
 
   async function applyRemoteToSystem(id) {
-
-    
-    const source = validateSourceId(id, '应用到系统');
-    
+    validateSourceId(id);
     
     loading.value = true;
     try {
       await window.go.services.NetworkService.ApplyRemoteToSystem(id);
 
     } catch (error) {
-      handleError('应用远程源到系统hosts', error);
+      handleError(error);
     } finally {
       loading.value = false;
     }

@@ -318,7 +318,7 @@ onMounted(async () => {
     refreshRemoteSources();
   });
   
-  addWailsListener('remote-source-status-changed', (id) => {
+  addWailsListener('remote-source-status-changed', () => {
     refreshRemoteSources();
   });
   

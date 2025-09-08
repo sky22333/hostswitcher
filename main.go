@@ -20,7 +20,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-// Windows API
+
 var (
 	kernel32         = syscall.NewLazyDLL("kernel32.dll")
 	user32           = syscall.NewLazyDLL("user32.dll")
@@ -31,7 +31,7 @@ var (
 	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
 )
 
-// 激活已运行窗口
+
 func activateExistingWindow() bool {
 	windowTitle, _ := syscall.UTF16PtrFromString("host 管理工具")
 	hwnd, _, _ := procFindWindow.Call(0, uintptr(unsafe.Pointer(windowTitle)))
@@ -64,7 +64,7 @@ func createSingleInstanceMutex() (syscall.Handle, error) {
 	return syscall.Handle(ret), nil
 }
 
-// 释放互斥锁
+
 func releaseMutex(handle syscall.Handle) {
 	if handle != 0 {
 		procCloseHandle.Call(uintptr(handle))
@@ -73,7 +73,7 @@ func releaseMutex(handle syscall.Handle) {
 
 
 
-// 应用程序入口
+
 func main() {
 	mutexHandle, err := createSingleInstanceMutex()
 	if err != nil {
@@ -88,13 +88,13 @@ func main() {
 	defer releaseMutex(mutexHandle)
 	
 	log.Println("启动 Host 管理工具...")
-	// 创建服务
+
 	tempCtx := context.Background()
 	configService := services.NewConfigService(tempCtx)
 	networkService := services.NewNetworkService(configService)
 	trayService := services.NewTrayService(configService)
 
-	// 初始化
+
 	err = configService.Initialize()
 	if err != nil {
 		log.Fatalf("初始化配置服务失败: %v", err)

@@ -173,8 +173,8 @@ function initEditor() {
     // 应用主题
     applyEditorTheme();
     
-  } catch (error) {
-    
+  } catch {
+    // 编辑器初始化失败时的静默处理
   }
 }
 

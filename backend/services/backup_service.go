@@ -17,7 +17,7 @@ import (
 	"hostswitcher/backend/models"
 )
 
-// BackupService 备份服务
+// BackupService 备份
 type BackupService struct {
 	ctx        context.Context
 	appDir     string
@@ -25,7 +25,7 @@ type BackupService struct {
 	maxBackups int
 }
 
-// NewBackupService 创建备份服务
+// NewBackupService 创建服务
 func NewBackupService(appDir string) *BackupService {
 	backupFile := filepath.Join(appDir, "backups.json")
 	
@@ -42,18 +42,18 @@ func NewBackupService(appDir string) *BackupService {
 	}
 }
 
-// SetContext 设置上下文
+// SetContext 设置ctx
 func (s *BackupService) SetContext(ctx context.Context) {
 	s.ctx = ctx
 }
 
-// calculateHash 计算MD5哈希
+// calculateHash 计算哈希
 func (s *BackupService) calculateHash(content string) string {
 	hash := md5.Sum([]byte(content))
 	return hex.EncodeToString(hash[:])
 }
 
-// loadBackups 从文件加载备份列表
+// loadBackups 加载备份
 func (s *BackupService) loadBackups() ([]*models.Backup, error) {
 	if _, err := os.Stat(s.backupFile); os.IsNotExist(err) {
 		return []*models.Backup{}, nil
@@ -77,7 +77,7 @@ func (s *BackupService) loadBackups() ([]*models.Backup, error) {
 	return backupList.Backups, nil
 }
 
-// saveBackups 保存备份列表到文件
+// saveBackups 保存备份
 func (s *BackupService) saveBackups(backups []*models.Backup) error {
 	backupList := models.BackupList{Backups: backups}
 	
@@ -93,13 +93,11 @@ func (s *BackupService) saveBackups(backups []*models.Backup) error {
 func (s *BackupService) CreateBackup(content, description string, isAutomatic bool, tags []string) (*models.Backup, error) {
 	hash := s.calculateHash(content)
 	
-	// 如果是自动备份，检查是否已存在相同内容的备份
 	if isAutomatic {
 		backups, err := s.loadBackups()
 		if err == nil {
 			for _, backup := range backups {
 				if backup.Hash == hash && backup.IsAutomatic {
-					// 相同内容的自动备份已存在，不创建新备份
 					return nil, nil
 				}
 			}
@@ -117,27 +115,22 @@ func (s *BackupService) CreateBackup(content, description string, isAutomatic bo
 		Hash:        hash,
 	}
 
-	// 加载现有备份
 	backups, err := s.loadBackups()
 	if err != nil {
 		return nil, err
 	}
 
-	// 添加新备份
 	backups = append(backups, backup)
 
-	// 如果是自动备份，清理旧的自动备份
 	if isAutomatic {
 		backups = s.cleanupAutoBackups(backups)
 	}
 
-	// 保存备份列表
 	err = s.saveBackups(backups)
 	if err != nil {
 		return nil, err
 	}
 
-	// 发出事件通知
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "backup-created", backup.ID)
 	}
@@ -145,9 +138,8 @@ func (s *BackupService) CreateBackup(content, description string, isAutomatic bo
 	return backup, nil
 }
 
-// cleanupAutoBackups 清理旧的自动备份，只保留最近的maxBackups个
+// cleanupAutoBackups 清理备份
 func (s *BackupService) cleanupAutoBackups(backups []*models.Backup) []*models.Backup {
-	// 分离自动备份和手动备份
 	var autoBackups []*models.Backup
 	var manualBackups []*models.Backup
 
@@ -159,17 +151,14 @@ func (s *BackupService) cleanupAutoBackups(backups []*models.Backup) []*models.B
 		}
 	}
 
-	// 按时间排序自动备份（最新的在前）
 	sort.Slice(autoBackups, func(i, j int) bool {
 		return autoBackups[i].Timestamp.Time.After(autoBackups[j].Timestamp.Time)
 	})
 
-	// 只保留最近的maxBackups个自动备份
 	if len(autoBackups) > s.maxBackups {
 		autoBackups = autoBackups[:s.maxBackups]
 	}
 
-	// 合并自动备份和手动备份
 	result := make([]*models.Backup, 0, len(autoBackups)+len(manualBackups))
 	result = append(result, autoBackups...)
 	result = append(result, manualBackups...)
@@ -177,14 +166,13 @@ func (s *BackupService) cleanupAutoBackups(backups []*models.Backup) []*models.B
 	return result
 }
 
-// GetAllBackups 获取所有备份
+// GetAllBackups 获取备份
 func (s *BackupService) GetAllBackups() ([]*models.Backup, error) {
 	backups, err := s.loadBackups()
 	if err != nil {
 		return nil, err
 	}
 
-	// 按时间排序（最新的在前）
 	sort.Slice(backups, func(i, j int) bool {
 		return backups[i].Timestamp.Time.After(backups[j].Timestamp.Time)
 	})
@@ -192,7 +180,7 @@ func (s *BackupService) GetAllBackups() ([]*models.Backup, error) {
 	return backups, nil
 }
 
-// GetBackupByID 根据ID获取备份
+// GetBackupByID 获取备份
 func (s *BackupService) GetBackupByID(id string) (*models.Backup, error) {
 	backups, err := s.loadBackups()
 	if err != nil {
@@ -215,23 +203,19 @@ func (s *BackupService) DeleteBackup(id string) error {
 		return err
 	}
 
-	// 查找并删除备份
 	for i, backup := range backups {
 		if backup.ID == id {
-			// 不允许删除自动备份（保护机制）
 			if backup.IsAutomatic {
 				return fmt.Errorf("不能删除自动备份")
 			}
 
 			backups = append(backups[:i], backups[i+1:]...)
 			
-			// 保存更新后的备份列表
 			err = s.saveBackups(backups)
 			if err != nil {
 				return err
 			}
 
-			// 发出事件通知
 			if s.ctx != nil {
 				wailsRuntime.EventsEmit(s.ctx, "backup-deleted", id)
 			}
@@ -243,7 +227,7 @@ func (s *BackupService) DeleteBackup(id string) error {
 	return fmt.Errorf("备份不存在: %s", id)
 }
 
-// UpdateBackupTags 更新备份标签
+// UpdateBackupTags 更新标签
 func (s *BackupService) UpdateBackupTags(id string, tags []string) error {
 	backups, err := s.loadBackups()
 	if err != nil {
@@ -254,13 +238,11 @@ func (s *BackupService) UpdateBackupTags(id string, tags []string) error {
 		if backup.ID == id {
 			backup.Tags = tags
 			
-			// 保存更新后的备份列表
 			err = s.saveBackups(backups)
 			if err != nil {
 				return err
 			}
 
-			// 发出事件通知
 			if s.ctx != nil {
 				wailsRuntime.EventsEmit(s.ctx, "backup-updated", id)
 			}
@@ -272,7 +254,7 @@ func (s *BackupService) UpdateBackupTags(id string, tags []string) error {
 	return fmt.Errorf("备份不存在: %s", id)
 }
 
-// UpdateBackupDescription 更新备份描述
+// UpdateBackupDescription 更新描述
 func (s *BackupService) UpdateBackupDescription(id, description string) error {
 	backups, err := s.loadBackups()
 	if err != nil {
@@ -283,13 +265,11 @@ func (s *BackupService) UpdateBackupDescription(id, description string) error {
 		if backup.ID == id {
 			backup.Description = description
 			
-			// 保存更新后的备份列表
 			err = s.saveBackups(backups)
 			if err != nil {
 				return err
 			}
 
-			// 发出事件通知
 			if s.ctx != nil {
 				wailsRuntime.EventsEmit(s.ctx, "backup-updated", id)
 			}
@@ -301,14 +281,13 @@ func (s *BackupService) UpdateBackupDescription(id, description string) error {
 	return fmt.Errorf("备份不存在: %s", id)
 }
 
-// RestoreBackup 恢复备份
+// RestoreBackup 恢复
 func (s *BackupService) RestoreBackup(id string) (string, error) {
 	backup, err := s.GetBackupByID(id)
 	if err != nil {
 		return "", err
 	}
 
-	// 发出事件通知
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "backup-restored", id)
 	}
@@ -316,7 +295,7 @@ func (s *BackupService) RestoreBackup(id string) (string, error) {
 	return backup.Content, nil
 }
 
-// GetBackupStats 获取备份统计信息
+// GetBackupStats 获取统计
 func (s *BackupService) GetBackupStats() (map[string]interface{}, error) {
 	backups, err := s.loadBackups()
 	if err != nil {
@@ -342,14 +321,13 @@ func (s *BackupService) GetBackupStats() (map[string]interface{}, error) {
 	return stats, nil
 }
 
-// ClearAllAutoBackups 清理所有自动备份
+// ClearAllAutoBackups 清理自动备份
 func (s *BackupService) ClearAllAutoBackups() error {
 	backups, err := s.loadBackups()
 	if err != nil {
 		return err
 	}
 
-	// 只保留手动备份
 	var manualBackups []*models.Backup
 	for _, backup := range backups {
 		if !backup.IsAutomatic {
@@ -357,13 +335,11 @@ func (s *BackupService) ClearAllAutoBackups() error {
 		}
 	}
 
-	// 保存更新后的备份列表
 	err = s.saveBackups(manualBackups)
 	if err != nil {
 		return err
 	}
 
-	// 发出事件通知
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "backup-list-changed")
 	}
