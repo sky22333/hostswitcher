@@ -51,7 +51,7 @@ export const useConfigStore = defineStore('config', () => {
       () => window.go.services.ConfigService.CreateConfig(name, description, content),
       loading,
       loadConfigs,
-      (error) => {}
+      () => {}
     );
   }
   
@@ -60,7 +60,7 @@ export const useConfigStore = defineStore('config', () => {
       () => window.go.services.ConfigService.UpdateConfig(id, name, description, content),
       loading,
       loadConfigs,
-      (error) => {}
+      () => {}
     );
   }
   
@@ -69,7 +69,7 @@ export const useConfigStore = defineStore('config', () => {
       () => window.go.services.ConfigService.DeleteConfig(id),
       loading,
       loadConfigs,
-      (error) => {}
+      () => {}
     );
   }
   
@@ -78,14 +78,14 @@ export const useConfigStore = defineStore('config', () => {
       () => window.go.services.ConfigService.ApplyConfig(id),
       loading,
       loadConfigs,
-      (error) => {}
+      () => {}
     );
   }
   
   async function readSystemHosts() {
     return safeAsync(
       () => window.go.services.ConfigService.ReadSystemHosts(),
-      (error) => {}
+      () => {}
     );
   }
   
@@ -94,7 +94,7 @@ export const useConfigStore = defineStore('config', () => {
       () => window.go.services.ConfigService.WriteSystemHosts(content),
       loading,
       null,
-      (error) => {}
+      () => {}
     );
   }
   

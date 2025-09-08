@@ -17,7 +17,6 @@ import (
 	"hostswitcher/backend/models"
 )
 
-
 //go:embed assets/appicon.ico
 var iconDataWin []byte
 
@@ -112,14 +111,14 @@ func (s *TrayService) Start() {
 func (s *TrayService) Stop() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	
+
 	if !s.isRunning {
 		return
 	}
-	
+
 	close(s.stopChan)
 	s.stopChan = make(chan struct{})
-	
+
 	s.isRunning = false
 	systray.Quit()
 }
@@ -131,7 +130,7 @@ func (s *TrayService) UpdateConfigs() {
 		s.mutex.Unlock()
 		return
 	}
-	
+
 	s.configs = s.configService.GetAllConfigs()
 	s.activeConfig = s.configService.GetActiveConfig()
 	s.mutex.Unlock()
@@ -144,23 +143,23 @@ func (s *TrayService) UpdateConfigs() {
 // onReady 准备就绪
 func (s *TrayService) onReady() {
 	iconData := s.getEmbeddedIcon()
-	
+
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("正在设置托盘图标，大小: %d 字节", len(iconData)))
 	}
-	
+
 	systray.SetIcon(iconData)
 	systray.SetTitle("host 管理工具")
 	systray.SetTooltip("host 管理工具")
 
 	mShow := systray.AddMenuItem("显示主界面", "显示主应用界面")
 	systray.AddSeparator()
-	
+
 	mRefreshRemote := systray.AddMenuItem("更新远程源", "更新所有远程 hosts 源")
-	
+
 	systray.AddSeparator()
 	mExit := systray.AddMenuItem("退出", "退出应用")
-	
+
 	go s.handleMenuEvents(mShow, mRefreshRemote, mExit)
 }
 
@@ -178,20 +177,20 @@ func (s *TrayService) handleMenuEvents(mShow, mRefreshRemote, mExit *systray.Men
 			go s.handleMenuEvents(mShow, mRefreshRemote, mExit)
 		}
 	}()
-	
+
 	var lastProcessTime time.Time
 	debounceInterval := 500 * time.Millisecond
 	for {
 		select {
 		case <-s.stopChan:
 			return
-			
+
 		case <-mShow.ClickedCh:
 			if time.Since(lastProcessTime) < debounceInterval {
 				continue
 			}
 			lastProcessTime = time.Now()
-			
+
 			go func() {
 				if s.ctx != nil {
 					wailsRuntime.WindowShow(s.ctx)
@@ -200,19 +199,19 @@ func (s *TrayService) handleMenuEvents(mShow, mRefreshRemote, mExit *systray.Men
 					wailsRuntime.WindowCenter(s.ctx)
 				}
 			}()
-			
+
 		case <-mRefreshRemote.ClickedCh:
 			if time.Since(lastProcessTime) < debounceInterval {
 				continue
 			}
 			lastProcessTime = time.Now()
-			
+
 			go func() {
 				if s.ctx != nil {
 					wailsRuntime.EventsEmit(s.ctx, "tray-refresh-remote")
 				}
 			}()
-			
+
 		case <-mExit.ClickedCh:
 			go func() {
 				if s.ctx != nil {
@@ -241,16 +240,16 @@ func (s *TrayService) OpenSystemHostsFile() error {
 // OpenUserDataDir 打开数据目录
 func (s *TrayService) OpenUserDataDir() error {
 	dataDir := s.configService.GetUserDataDir()
-	
+
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("尝试打开用户数据目录: %s", dataDir))
 	}
-	
+
 	err := open.Run(dataDir)
 	if err != nil && s.ctx != nil {
 		wailsRuntime.LogError(s.ctx, fmt.Sprintf("打开用户数据目录失败: %v", err))
 	}
-	
+
 	return err
 }
 
@@ -259,22 +258,22 @@ func (s *TrayService) OpenBrowser(url string) error {
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("尝试打开浏览器访问: %s", url))
 	}
-	
+
 	err := open.Run(url)
 	if err != nil && s.ctx != nil {
 		wailsRuntime.LogError(s.ctx, fmt.Sprintf("打开浏览器失败: %v", err))
 	}
-	
+
 	return err
 }
 
 // Cleanup 清理
 func (s *TrayService) Cleanup() {
 	s.Stop()
-	
+
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	
+
 	s.configs = nil
 	s.activeConfig = nil
 }

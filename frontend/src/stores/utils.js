@@ -33,7 +33,7 @@ export async function withLoadingAndReload(operation, loadingRef, reloadFunction
 }
 
 /**
- * 简单的异步操作包装器（无loading状态）
+ * 异步操作包装器
  * @param {Function} operation - 要执行的异步操作
  * @param {Function} onError - 错误处理函数（可选）
  * @returns {Promise} 操作结果

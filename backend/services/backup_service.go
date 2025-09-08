@@ -28,7 +28,6 @@ type BackupService struct {
 // NewBackupService 创建服务
 func NewBackupService(appDir string) *BackupService {
 	backupFile := filepath.Join(appDir, "backups.json")
-	
 
 	err := os.MkdirAll(appDir, 0755)
 	if err != nil {
@@ -80,7 +79,7 @@ func (s *BackupService) loadBackups() ([]*models.Backup, error) {
 // saveBackups 保存备份
 func (s *BackupService) saveBackups(backups []*models.Backup) error {
 	backupList := models.BackupList{Backups: backups}
-	
+
 	data, err := json.MarshalIndent(backupList, "", "  ")
 	if err != nil {
 		return err
@@ -92,7 +91,7 @@ func (s *BackupService) saveBackups(backups []*models.Backup) error {
 // CreateBackup 创建备份
 func (s *BackupService) CreateBackup(content, description string, isAutomatic bool, tags []string) (*models.Backup, error) {
 	hash := s.calculateHash(content)
-	
+
 	if isAutomatic {
 		backups, err := s.loadBackups()
 		if err == nil {
@@ -210,7 +209,7 @@ func (s *BackupService) DeleteBackup(id string) error {
 			}
 
 			backups = append(backups[:i], backups[i+1:]...)
-			
+
 			err = s.saveBackups(backups)
 			if err != nil {
 				return err
@@ -237,7 +236,7 @@ func (s *BackupService) UpdateBackupTags(id string, tags []string) error {
 	for _, backup := range backups {
 		if backup.ID == id {
 			backup.Tags = tags
-			
+
 			err = s.saveBackups(backups)
 			if err != nil {
 				return err
@@ -264,7 +263,7 @@ func (s *BackupService) UpdateBackupDescription(id, description string) error {
 	for _, backup := range backups {
 		if backup.ID == id {
 			backup.Description = description
-			
+
 			err = s.saveBackups(backups)
 			if err != nil {
 				return err

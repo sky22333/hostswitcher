@@ -95,11 +95,7 @@ import NotificationSystem from '@/components/NotificationSystem.vue';
 // Store
 const configStore = useConfigStore();
 const notificationStore = useNotificationStore();
-
-// 事件管理器
 const { addWailsListener } = useEventManager();
-
-// 响应式数据
 const activeTab = ref('editor');
 
 // 监听activeTab变化
@@ -144,9 +140,8 @@ onMounted(async () => {
   try {
     await configStore.initialize();
     
-    // 监听托盘事件 - 使用统一事件管理器
+    // 监听托盘事件 - 统一的事件管理器
     addWailsListener('tray-refresh-remote', () => {
-      // 切换到远程源页面
       activeTab.value = 'remote';
       notificationStore.showNotification('正在更新远程源...', 'info');
     });

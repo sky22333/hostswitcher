@@ -47,24 +47,24 @@ func (jt *JSONTime) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// 处理空字符串
 	if timeStr == "" {
 		jt.Time = time.Time{}
 		return nil
 	}
-	
+
 	// 尝试多种时间格式
 	formats := []string{
-		time.RFC3339,                    // 2006-01-02T15:04:05Z07:00
-		time.RFC3339Nano,                // 2006-01-02T15:04:05.999999999Z07:00
-		"2006-01-02T15:04:05+07:00",     // 支持用户数据中的时区格式 +08:00
-		"2006-01-02T15:04:05-07:00",     // 支持负时区
-		"2006-01-02T15:04:05Z",          // UTC时间
-		"2006-01-02T15:04:05",           // 无时区
-		"2006-01-02 15:04:05",           // 空格分隔
+		time.RFC3339,                // 2006-01-02T15:04:05Z07:00
+		time.RFC3339Nano,            // 2006-01-02T15:04:05.999999999Z07:00
+		"2006-01-02T15:04:05+07:00", // 支持用户数据中的时区格式 +08:00
+		"2006-01-02T15:04:05-07:00", // 支持负时区
+		"2006-01-02T15:04:05Z",      // UTC时间
+		"2006-01-02T15:04:05",       // 无时区
+		"2006-01-02 15:04:05",       // 空格分隔
 	}
-	
+
 	var lastErr error
 	for _, format := range formats {
 		if t, err := time.Parse(format, timeStr); err == nil {
@@ -74,7 +74,7 @@ func (jt *JSONTime) UnmarshalJSON(data []byte) error {
 			lastErr = err
 		}
 	}
-	
+
 	// 如果所有格式都失败，返回最后一个错误
 	return fmt.Errorf("无法解析时间格式 '%s': %v", timeStr, lastErr)
 }

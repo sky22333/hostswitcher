@@ -48,12 +48,9 @@ func NewConfigService(ctx context.Context) *ConfigService {
 		homeDir = "."
 	}
 
-
 	appDir := filepath.Join(homeDir, ".hosts-manager")
 
-
 	os.MkdirAll(appDir, 0755)
-
 
 	var systemHosts string
 	switch runtime.GOOS {
@@ -65,11 +62,9 @@ func NewConfigService(ctx context.Context) *ConfigService {
 		systemHosts = "/etc/hosts"
 	}
 
-
 	if _, err := os.Stat(systemHosts); err != nil {
 		log.Printf("系统hosts文件不存在: %s", systemHosts)
 	}
-
 
 	backupService := NewBackupService(appDir)
 	backupService.SetContext(ctx)
@@ -106,7 +101,6 @@ func (s *ConfigService) Initialize() error {
 	if err := s.loadConfigs(); err != nil {
 		s.configs = []*models.Config{}
 	}
-	
 
 	for _, config := range s.configs {
 		if config.IsActive {
@@ -122,7 +116,6 @@ func (s *ConfigService) Initialize() error {
 func (s *ConfigService) loadConfigs() error {
 
 	configFile := filepath.Join(s.appDir, "configs.json")
-	
 
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 
@@ -130,18 +123,15 @@ func (s *ConfigService) loadConfigs() error {
 		return nil
 	}
 
-
 	data, err := os.ReadFile(configFile)
 	if err != nil {
 		return err
 	}
 
-
 	err = json.Unmarshal(data, &s.configs)
 	if err != nil {
 		return err
 	}
-
 
 	if s.configs == nil {
 		s.configs = []*models.Config{}
@@ -179,7 +169,6 @@ func (s *ConfigService) CreateConfig(name, description, content string) (*models
 	if strings.TrimSpace(content) == "" {
 		return nil, errors.New("配置内容不能为空")
 	}
-	
 
 	newConfig := &models.Config{
 		ID:          uuid.New().String(),
@@ -192,15 +181,12 @@ func (s *ConfigService) CreateConfig(name, description, content string) (*models
 		UpdatedAt:   models.GetCurrentTimeRFC3339(),
 	}
 
-
 	s.configs = append(s.configs, newConfig)
-
 
 	err := s.saveConfigs()
 	if err != nil {
 		return nil, err
 	}
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "config-list-changed")
@@ -221,7 +207,6 @@ func (s *ConfigService) UpdateConfig(id, name, description, content string) (*mo
 	if strings.TrimSpace(content) == "" {
 		return nil, errors.New("配置内容不能为空")
 	}
-	
 
 	var config *models.Config
 	for _, c := range s.configs {
@@ -235,18 +220,15 @@ func (s *ConfigService) UpdateConfig(id, name, description, content string) (*mo
 		return nil, errors.New("配置不存在")
 	}
 
-
 	config.Name = name
 	config.Description = description
 	config.Content = content
 	config.UpdatedAt = models.GetCurrentTimeRFC3339()
 
-
 	err := s.saveConfigs()
 	if err != nil {
 		return nil, err
 	}
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "config-list-changed")
@@ -262,7 +244,6 @@ func (s *ConfigService) DeleteConfig(id string) error {
 		return errors.New("不能删除当前激活的配置")
 	}
 
-
 	index := -1
 	for i, config := range s.configs {
 		if config.ID == id {
@@ -275,15 +256,12 @@ func (s *ConfigService) DeleteConfig(id string) error {
 		return errors.New("配置不存在")
 	}
 
-
 	s.configs = append(s.configs[:index], s.configs[index+1:]...)
-
 
 	err := s.saveConfigs()
 	if err != nil {
 		return err
 	}
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "config-list-changed")
@@ -301,33 +279,28 @@ func (s *ConfigService) ApplyConfig(id string) error {
 			break
 		}
 	}
-	
+
 	if config == nil {
 		return errors.New("配置不存在")
 	}
-	
 
 	currentContent, err := os.ReadFile(s.systemHosts)
 	if err != nil {
 		return fmt.Errorf("读取当前系统hosts失败: %v", err)
 	}
-	
 
 	if s.backupService != nil {
 		s.backupService.CreateBackup(string(currentContent), fmt.Sprintf("应用配置 '%s' 前的自动备份", config.Name), true, []string{"auto", "apply", config.Name})
 	}
-	
 
 	if err := s.ValidateHostsContent(config.Content); err != nil {
 		return fmt.Errorf("配置内容验证失败: %v", err)
 	}
-	
 
 	err = os.WriteFile(s.systemHosts, []byte(config.Content), 0644)
 	if err != nil {
 		return fmt.Errorf("写入系统hosts失败: %v", err)
 	}
-	
 
 	for _, c := range s.configs {
 		c.IsActive = (c.ID == id)
@@ -335,7 +308,6 @@ func (s *ConfigService) ApplyConfig(id string) error {
 			c.UpdatedAt = models.JSONTime{Time: time.Now()}
 		}
 	}
-	
 
 	err = s.saveConfigs()
 	if err != nil {
@@ -343,11 +315,10 @@ func (s *ConfigService) ApplyConfig(id string) error {
 		os.WriteFile(s.systemHosts, currentContent, 0644)
 		return fmt.Errorf("保存配置失败: %v", err)
 	}
-	
 
 	wailsRuntime.EventsEmit(s.ctx, "config-applied", id)
 	wailsRuntime.EventsEmit(s.ctx, "config-list-changed")
-	
+
 	return nil
 }
 
@@ -355,30 +326,29 @@ func (s *ConfigService) ApplyConfig(id string) error {
 func (s *ConfigService) ReadSystemHosts() (string, error) {
 
 	hostsPath := s.GetSystemHostsPath()
-	
+
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("直接读取系统hosts文件: %s", hostsPath))
 	}
-	
+
 	content, err := os.ReadFile(hostsPath)
 	if err != nil {
 		if s.ctx != nil {
 			wailsRuntime.LogError(s.ctx, fmt.Sprintf("读取系统hosts文件失败: %v", err))
 		}
-		
 
 		if os.IsNotExist(err) {
 			if createErr := s.createDefaultHostsFile(hostsPath); createErr == nil {
-	
+
 				content, err = os.ReadFile(hostsPath)
 			}
 		}
-		
+
 		if err != nil {
 			return "", fmt.Errorf("读取系统hosts文件失败: %v", err)
 		}
 	}
-	
+
 	result := string(content)
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("成功读取系统hosts文件，内容长度: %d 字符", len(result)))
@@ -389,7 +359,7 @@ func (s *ConfigService) ReadSystemHosts() (string, error) {
 			wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("文件完整内容: %s", result))
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -399,23 +369,20 @@ func (s *ConfigService) WriteSystemHosts(content string) error {
 	if err := s.ValidateHostsContent(content); err != nil {
 		return fmt.Errorf("内容验证失败: %v", err)
 	}
-	
 
 	if s.backupService != nil {
 		if currentContent, err := s.ReadSystemHosts(); err == nil {
 			s.backupService.CreateBackup(currentContent, "系统hosts文件自动备份", true, []string{"auto", "system"})
 		}
 	}
-	
 
 	err := os.WriteFile(s.systemHosts, []byte(content), 0644)
 	if err != nil {
 		return fmt.Errorf("写入失败: %v", err)
 	}
-	
 
 	wailsRuntime.EventsEmit(s.ctx, "system-hosts-updated")
-	
+
 	return nil
 }
 
@@ -431,14 +398,12 @@ func (s *ConfigService) GetSystemHostsPath() string {
 
 			systemRoot = "C:\\Windows"
 		}
-		
+
 		hostsPath := filepath.Join(systemRoot, "System32", "drivers", "etc", "hosts")
-		
 
 		if s.ctx != nil {
 			wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("系统 hosts 文件路径: %s", hostsPath))
 		}
-		
 
 		if _, err := os.Stat(hostsPath); os.IsNotExist(err) {
 			if s.ctx != nil {
@@ -447,7 +412,7 @@ func (s *ConfigService) GetSystemHostsPath() string {
 
 			s.createDefaultHostsFile(hostsPath)
 		}
-		
+
 		return hostsPath
 	} else {
 
@@ -470,7 +435,6 @@ func (s *ConfigService) createDefaultHostsFile(hostsPath string) error {
 		}
 		return fmt.Errorf("创建目录失败: %v", err)
 	}
-	
 
 	err := os.WriteFile(hostsPath, []byte(defaultHostsContent), 0644)
 	if err != nil {
@@ -479,11 +443,11 @@ func (s *ConfigService) createDefaultHostsFile(hostsPath string) error {
 		}
 		return fmt.Errorf("创建默认hosts文件失败: %v", err)
 	}
-	
+
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("已创建默认hosts文件: %s", hostsPath))
 	}
-	
+
 	return nil
 }
 
@@ -492,12 +456,11 @@ func (s *ConfigService) IsAdminRequired() bool {
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, "检查管理员权限...")
 	}
-	
 
 	if GetOSType() == "windows" {
 
 		elevated := s.isProcessElevated()
-		
+
 		if s.ctx != nil {
 			if elevated {
 				wailsRuntime.LogInfo(s.ctx, "检测到管理员权限")
@@ -505,10 +468,10 @@ func (s *ConfigService) IsAdminRequired() bool {
 				wailsRuntime.LogWarning(s.ctx, "需要管理员权限")
 			}
 		}
-		
+
 		return !elevated
 	}
-	
+
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, "非Windows系统，不需要管理员权限")
 	}
@@ -527,11 +490,10 @@ func (s *ConfigService) isProcessElevated() bool {
 		return false
 	}
 	defer token.Close()
-	
 
 	var isElevated uint32
 	var returnedLen uint32
-	
+
 	err = windows.GetTokenInformation(
 		token,
 		windows.TokenElevation,
@@ -539,14 +501,14 @@ func (s *ConfigService) isProcessElevated() bool {
 		uint32(unsafe.Sizeof(isElevated)),
 		&returnedLen,
 	)
-	
+
 	if err != nil {
 		if s.ctx != nil {
 			wailsRuntime.LogError(s.ctx, fmt.Sprintf("无法查询token信息: %v", err))
 		}
 		return false
 	}
-	
+
 	return isElevated != 0
 }
 
@@ -555,18 +517,15 @@ func (s *ConfigService) ValidateHostsContent(content string) error {
 	lines := strings.Split(content, "\n")
 	for i, line := range lines {
 		line = strings.TrimSpace(line)
-		
 
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		
 
 		parts := strings.Fields(line)
 		if len(parts) < 2 {
 			return fmt.Errorf("第 %d 行格式错误，应为: IP地址 主机名", i+1)
 		}
-		
 
 	}
 	return nil
@@ -576,13 +535,11 @@ func (s *ConfigService) ValidateHostsContent(content string) error {
 func (s *ConfigService) saveConfigs() error {
 
 	configFile := filepath.Join(s.appDir, "configs.json")
-	
 
 	data, err := json.MarshalIndent(s.configs, "", "  ")
 	if err != nil {
 		return err
 	}
-
 
 	err = os.WriteFile(configFile, data, 0644)
 	if err != nil {
@@ -614,17 +571,14 @@ func (s *ConfigService) UpdateConfigSource(id, source, remoteURL string) error {
 		return errors.New("配置不存在")
 	}
 
-
 	config.Source = source
 	config.RemoteURL = remoteURL
 	config.UpdatedAt = models.GetCurrentTimeRFC3339()
-
 
 	err := s.saveConfigs()
 	if err != nil {
 		return err
 	}
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "config-list-changed")
@@ -641,17 +595,14 @@ func (s *ConfigService) RestoreDefaultHosts() error {
 		return fmt.Errorf("恢复默认hosts文件失败: %v", err)
 	}
 
-
 	for _, config := range s.configs {
 		config.IsActive = false
 	}
-
 
 	err = s.saveConfigs()
 	if err != nil {
 		return fmt.Errorf("保存配置失败: %v", err)
 	}
-
 
 	wailsRuntime.EventsEmit(s.ctx, "config-list-changed")
 	wailsRuntime.EventsEmit(s.ctx, "system-hosts-updated")
@@ -664,7 +615,6 @@ func (s *ConfigService) FlushDNSCache() error {
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, "开始使用Windows API刷新DNS缓存")
 	}
-	
 
 	err := flushDNSResolverCache()
 	if err != nil {
@@ -674,15 +624,13 @@ func (s *ConfigService) FlushDNSCache() error {
 		}
 		return fmt.Errorf(errorMsg)
 	}
-	
+
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, "DNS缓存刷新成功")
 	}
-	
+
 	return nil
 }
-
-
 
 // GetAllBackups 获取备份
 func (s *ConfigService) GetAllBackups() ([]*models.Backup, error) {
@@ -697,17 +645,16 @@ func (s *ConfigService) CreateManualBackup(description string, tags []string) (*
 	if s.backupService == nil {
 		return nil, fmt.Errorf("备份服务未初始化")
 	}
-	
 
 	content, err := s.ReadSystemHosts()
 	if err != nil {
 		return nil, fmt.Errorf("读取系统hosts失败: %v", err)
 	}
-	
+
 	if description == "" {
 		description = "手动备份"
 	}
-	
+
 	return s.backupService.CreateBackup(content, description, false, tags)
 }
 
@@ -716,11 +663,11 @@ func (s *ConfigService) CreateManualBackupWithContent(description, content strin
 	if s.backupService == nil {
 		return nil, fmt.Errorf("备份服务未初始化")
 	}
-	
+
 	if description == "" {
 		description = "手动备份"
 	}
-	
+
 	if content == "" {
 
 		var err error
@@ -729,7 +676,7 @@ func (s *ConfigService) CreateManualBackupWithContent(description, content strin
 			return nil, fmt.Errorf("读取系统hosts失败: %v", err)
 		}
 	}
-	
+
 	return s.backupService.CreateBackup(content, description, false, tags)
 }
 
@@ -738,17 +685,15 @@ func (s *ConfigService) RestoreFromBackup(backupID string) error {
 	if s.backupService == nil {
 		return fmt.Errorf("备份服务未初始化")
 	}
-	
+
 	content, err := s.backupService.RestoreBackup(backupID)
 	if err != nil {
 		return err
 	}
-	
 
 	if currentContent, readErr := s.ReadSystemHosts(); readErr == nil {
 		s.backupService.CreateBackup(currentContent, "恢复备份前的自动备份", true, []string{"auto", "restore"})
 	}
-	
 
 	return s.WriteSystemHosts(content)
 }
@@ -806,21 +751,18 @@ func flushDNSResolverCache() error {
 		return fmt.Errorf("加载dnsapi.dll失败: %v", err)
 	}
 	defer syscall.FreeLibrary(dnsapi)
-	
 
 	proc, err := syscall.GetProcAddress(dnsapi, "DnsFlushResolverCache")
 	if err != nil {
 		return fmt.Errorf("获取DnsFlushResolverCache函数失败: %v", err)
 	}
-	
 
 	_, _, callErr := syscall.Syscall(proc, 0, 0, 0, 0)
-	
 
 	if callErr != 0 {
 
 		return fmt.Errorf("调用DnsFlushResolverCache失败: %v", callErr)
 	}
-	
+
 	return nil
 }

@@ -35,13 +35,10 @@ func NewNetworkService(configService *ConfigService) *NetworkService {
 		userDir = "."
 	}
 
-
 	appDir := filepath.Join(userDir, ".hosts-manager")
 	remoteFile := filepath.Join(appDir, "remote_sources.json")
 
-
 	os.MkdirAll(appDir, 0755)
-
 
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
@@ -73,14 +70,13 @@ func (s *NetworkService) Initialize() error {
 
 		s.remoteSources = []*models.RemoteSource{}
 	}
-	
 
 	go func() {
 
 		time.Sleep(3 * time.Second)
 		s.updateStartupSources()
 	}()
-	
+
 	return nil
 }
 
@@ -90,13 +86,13 @@ func (s *NetworkService) findRemoteSource(id string) (*models.RemoteSource, erro
 	if strings.TrimSpace(id) == "" {
 		return nil, errors.New("远程源ID不能为空")
 	}
-	
+
 	for _, source := range s.remoteSources {
 		if source.ID == id {
 			return source, nil
 		}
 	}
-	
+
 	return nil, fmt.Errorf("未找到ID为 %s 的远程源", id)
 }
 
@@ -108,17 +104,15 @@ func (s *NetworkService) validateRemoteSourceParams(name, url, updateFreq string
 	if strings.TrimSpace(url) == "" {
 		return errors.New("URL不能为空")
 	}
-	
 
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		return errors.New("URL必须以http://或https://开头")
 	}
 
-
 	if updateFreq != "manual" && updateFreq != "startup" {
 		return errors.New("更新频率必须是manual或startup")
 	}
-	
+
 	return nil
 }
 
@@ -131,18 +125,15 @@ func (s *NetworkService) loadRemoteSources() error {
 		return nil
 	}
 
-
 	data, err := os.ReadFile(s.remoteFile)
 	if err != nil {
 		return err
 	}
 
-
 	if len(data) == 0 {
 		s.remoteSources = []*models.RemoteSource{}
 		return nil
 	}
-
 
 	var sourcesArray []*models.RemoteSource
 	err = json.Unmarshal(data, &sourcesArray)
@@ -161,7 +152,6 @@ func (s *NetworkService) loadRemoteSources() error {
 		wailsRuntime.LogInfo(s.ctx, "尝试解析为数组格式失败，尝试解析为单个对象格式")
 	}
 
-
 	var singleSource models.RemoteSource
 	err = json.Unmarshal(data, &singleSource)
 	if err == nil {
@@ -179,7 +169,6 @@ func (s *NetworkService) loadRemoteSources() error {
 	if s.ctx != nil {
 		wailsRuntime.LogError(s.ctx, fmt.Sprintf("JSON解析失败: %v", err))
 	}
-
 
 	s.remoteSources = []*models.RemoteSource{}
 	return nil
@@ -222,7 +211,7 @@ func (s *NetworkService) GetAllRemoteSources() []*models.RemoteSource {
 			wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("远程源[%d]: ID=%s, Name=%s, Status=%s", i, src.ID, src.Name, src.Status))
 		}
 	}
-	
+
 	return s.remoteSources
 }
 
@@ -236,12 +225,10 @@ func (s *NetworkService) AddRemoteSource(name, url, updateFreq string) (*models.
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("AddRemoteSource: 开始添加远程源 - Name: %s, URL: %s", name, url))
 	}
-	
 
 	if err := s.validateRemoteSourceParams(name, url, updateFreq); err != nil {
 		return nil, err
 	}
-
 
 	newSource := &models.RemoteSource{
 		ID:            uuid.New().String(),
@@ -257,13 +244,11 @@ func (s *NetworkService) AddRemoteSource(name, url, updateFreq string) (*models.
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("添加前远程源数量: %d", len(s.remoteSources)))
 	}
 
-
 	s.remoteSources = append(s.remoteSources, newSource)
 
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("添加后远程源数量: %d", len(s.remoteSources)))
 	}
-
 
 	err := s.saveRemoteSources()
 	if err != nil {
@@ -276,7 +261,6 @@ func (s *NetworkService) AddRemoteSource(name, url, updateFreq string) (*models.
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, "远程源保存成功")
 	}
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "remote-source-list-changed")
@@ -292,29 +276,24 @@ func (s *NetworkService) UpdateRemoteSource(id, name, url, updateFreq string) (*
 	if strings.TrimSpace(id) == "" {
 		return nil, errors.New("ID不能为空")
 	}
-	
 
 	if err := s.validateRemoteSourceParams(name, url, updateFreq); err != nil {
 		return nil, err
 	}
-
 
 	source, err := s.findRemoteSource(id)
 	if err != nil {
 		return nil, err
 	}
 
-
 	source.Name = name
 	source.URL = url
 	source.UpdateFreq = updateFreq
-
 
 	err = s.saveRemoteSources()
 	if err != nil {
 		return nil, err
 	}
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "remote-source-list-changed")
@@ -340,24 +319,21 @@ func (s *NetworkService) DeleteRemoteSource(id string) error {
 		return errors.New("远程源不存在")
 	}
 
-
 	currentContent, err := s.configService.ReadSystemHosts()
 	if err == nil {
 
 		cleanedContent := s.cleanOldRemoteContent(currentContent, sourceToDelete.Name)
-		
 
 		if cleanedContent != currentContent {
 			err = s.configService.WriteSystemHosts(cleanedContent)
 			if err != nil {
-	
+
 				if s.ctx != nil {
 					wailsRuntime.LogWarning(s.ctx, "删除远程源时清理hosts文件失败: "+err.Error())
 				}
 			}
 		}
 	}
-
 
 	configs := s.configService.GetAllConfigs()
 	for _, config := range configs {
@@ -366,15 +342,12 @@ func (s *NetworkService) DeleteRemoteSource(id string) error {
 		}
 	}
 
-
 	s.remoteSources = append(s.remoteSources[:index], s.remoteSources[index+1:]...)
-
 
 	err = s.saveRemoteSources()
 	if err != nil {
 		return err
 	}
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "remote-source-list-changed")
@@ -395,7 +368,6 @@ func (s *NetworkService) FetchRemoteHosts(id string) (string, error) {
 			wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("远程源[%d]: ID=%s, Name=%s, URL=%s", i, src.ID, src.Name, src.URL))
 		}
 	}
-	
 
 	source, err := s.findRemoteSource(id)
 	if err != nil {
@@ -409,15 +381,12 @@ func (s *NetworkService) FetchRemoteHosts(id string) (string, error) {
 		wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("找到远程源: %s (%s)", source.Name, source.URL))
 	}
 
-
 	source.Status = "pending"
 	s.saveRemoteSources()
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "remote-source-status-changed", id)
 	}
-
 
 	req, err := http.NewRequest("GET", source.URL, nil)
 	if err != nil {
@@ -429,18 +398,16 @@ func (s *NetworkService) FetchRemoteHosts(id string) (string, error) {
 		}
 		return "", fmt.Errorf("创建HTTP请求失败: %v", err)
 	}
-	
 
 	req.Header.Set("User-Agent", "HostSwitcher/1.0")
 	req.Header.Set("Accept", "text/plain, */*")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
 
-
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		source.Status = "failed"
 		s.saveRemoteSources()
-		
+
 		if s.ctx != nil {
 			wailsRuntime.EventsEmit(s.ctx, "remote-source-status-changed", id)
 			wailsRuntime.LogError(s.ctx, fmt.Sprintf("HTTP请求失败: %v", err))
@@ -452,7 +419,7 @@ func (s *NetworkService) FetchRemoteHosts(id string) (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		source.Status = "failed"
 		s.saveRemoteSources()
-		
+
 		if s.ctx != nil {
 			wailsRuntime.EventsEmit(s.ctx, "remote-source-status-changed", id)
 			wailsRuntime.LogError(s.ctx, fmt.Sprintf("HTTP响应状态错误: %s", resp.Status))
@@ -460,12 +427,11 @@ func (s *NetworkService) FetchRemoteHosts(id string) (string, error) {
 		return "", fmt.Errorf("服务器响应错误: %s", resp.Status)
 	}
 
-
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 50*1024*1024))
 	if err != nil {
 		source.Status = "failed"
 		s.saveRemoteSources()
-		
+
 		if s.ctx != nil {
 			wailsRuntime.EventsEmit(s.ctx, "remote-source-status-changed", id)
 			wailsRuntime.LogError(s.ctx, fmt.Sprintf("读取响应内容失败: %v", err))
@@ -474,13 +440,11 @@ func (s *NetworkService) FetchRemoteHosts(id string) (string, error) {
 	}
 
 	remoteContent := string(body)
-	
 
 	source.Status = "success"
 	source.LastUpdatedAt = models.GetCurrentTimeRFC3339()
 	source.LastContent = remoteContent
 	s.saveRemoteSources()
-
 
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "remote-source-status-changed", id)
@@ -575,7 +539,7 @@ func (s *NetworkService) UpdateConfigFromRemote(configID string) (*models.Config
 		if err != nil {
 			return nil, err
 		}
-		
+
 		remoteContent = string(body)
 		sourceName = "远程源"
 	}
@@ -619,7 +583,7 @@ func (s *NetworkService) mergeHostsContent(currentContent, remoteContent, source
 	currentContent = s.cleanOldRemoteContent(currentContent, sourceName)
 	separator := "\n\n# ===== 以下是从 " + sourceName + " 获取的远程内容 =====\n"
 	endSeparator := "\n# ===== " + sourceName + " 远程内容结束 =====\n\n"
-	
+
 	currentContent += separator + remoteContent + endSeparator
 
 	return currentContent
@@ -629,13 +593,13 @@ func (s *NetworkService) mergeHostsContent(currentContent, remoteContent, source
 func (s *NetworkService) cleanOldRemoteContent(content, sourceName string) string {
 	separator := "\n\n# ===== 以下是从 " + sourceName + " 获取的远程内容 =====\n"
 	endSeparator := "\n# ===== " + sourceName + " 远程内容结束 =====\n\n"
-	
+
 	for {
 		startIndex := strings.Index(content, separator)
 		if startIndex == -1 {
 			break // 没有找到该源的内容
 		}
-		
+
 		endIndex := strings.Index(content[startIndex:], endSeparator)
 		if endIndex == -1 {
 			// 没找到结束标记，尝试查找下一个开始标记
@@ -653,7 +617,7 @@ func (s *NetworkService) cleanOldRemoteContent(content, sourceName string) strin
 			content = content[:startIndex] + content[endIndex:]
 		}
 	}
-	
+
 	return content
 }
 
@@ -677,12 +641,12 @@ func (s *NetworkService) UpdateAllRemoteSources() error {
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, "手动触发更新所有远程源")
 	}
-	
+
 	for _, source := range s.remoteSources {
 		if s.ctx != nil {
 			wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("正在更新远程源: %s", source.Name))
 		}
-		
+
 		// 直接应用到系统hosts文件
 		err := s.ApplyRemoteToSystem(source.ID)
 		if err != nil {
@@ -695,7 +659,7 @@ func (s *NetworkService) UpdateAllRemoteSources() error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -706,7 +670,7 @@ func (s *NetworkService) Cleanup() {
 			transport.CloseIdleConnections()
 		}
 	}
-	
+
 	s.remoteSources = nil
 }
 
@@ -751,20 +715,20 @@ func (s *NetworkService) updateStartupSources() {
 	if s.ctx != nil {
 		wailsRuntime.LogInfo(s.ctx, "开始检查启动时自动更新的远程源")
 	}
-	
+
 	if len(s.remoteSources) == 0 {
 		if s.ctx != nil {
 			wailsRuntime.LogInfo(s.ctx, "没有配置任何远程源，跳过启动时更新")
 		}
 		return
 	}
-	
+
 	for _, source := range s.remoteSources {
 		if source.UpdateFreq == "startup" {
 			if s.ctx != nil {
 				wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("正在检查启动源: %s (URL: %s)", source.Name, source.URL))
 			}
-			
+
 			newContent, err := s.FetchRemoteHosts(source.ID)
 			if err != nil {
 				if s.ctx != nil {
@@ -774,18 +738,18 @@ func (s *NetworkService) updateStartupSources() {
 				s.saveRemoteSources()
 				continue
 			}
-			
+
 			if source.LastContent != "" && source.LastContent == newContent {
 				if s.ctx != nil {
 					wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("远程源 %s 内容无变化，跳过更新", source.Name))
 				}
 				continue
 			}
-			
+
 			if s.ctx != nil {
 				wailsRuntime.LogInfo(s.ctx, fmt.Sprintf("远程源 %s 内容有变化，正在应用更新", source.Name))
 			}
-			
+
 			err = s.ApplyRemoteToSystem(source.ID)
 			if err != nil {
 				if s.ctx != nil {
@@ -803,7 +767,7 @@ func (s *NetworkService) updateStartupSources() {
 			}
 		}
 	}
-	
+
 	if s.ctx != nil {
 		wailsRuntime.EventsEmit(s.ctx, "startup-sources-updated")
 	}
