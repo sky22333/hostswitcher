@@ -14,9 +14,9 @@ on:
         default: false
 
 env:
-  GO_VERSION: '1.22'
-  NODE_VERSION: '18'
-  WAILS_VERSION: 'latest'
+  GO_VERSION: '1.23'
+  NODE_VERSION: '20'
+  WAILS_VERSION: 'v2.10.1'
 
 jobs:
   # 构建 Windows 版本
@@ -67,7 +67,7 @@ jobs:
         with:
           name: windows-build
           path: dist/HostSwitcher.exe
-          retention-days: 1
+          retention-days: 3
 
 
   # 创建 Release 并上传所有构建产物
