@@ -1,0 +1,82 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HostsManager.ViewModels"
+             x:Class="HostsManager.Views.BackupView"
+             x:DataType="vm:BackupViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- 标题栏 -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="备份管理" 
+                      FontSize="24" 
+                      FontWeight="SemiBold"
+                      Margin="0,0,0,8"/>
+            <TextBlock Text="管理 Hosts 文件的备份版本" 
+                      FontSize="12"
+                      Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </StackPanel>
+
+        <!-- 备份列表 -->
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12">
+            <ListBox ItemsSource="{Binding Backups}"
+                    SelectedItem="{Binding SelectedBackup}"
+                    Background="Transparent"
+                    BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding DisplayName}" 
+                                      FontWeight="Medium"/>
+                            <TextBlock Text="{Binding FileName}" 
+                                      FontSize="11"
+                                      Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- 底部操作栏 -->
+        <Grid Grid.Row="2" 
+              ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto"
+              Margin="0,16,0,0">
+            <TextBlock Grid.Column="0" 
+                      Text="{Binding StatusMessage}"
+                      VerticalAlignment="Center"/>
+
+            <Button Grid.Column="1"
+                   Content="刷新列表"
+                   Command="{Binding LoadBackupsCommand}"
+                   IsEnabled="{Binding !IsLoading}"
+                   Margin="0,0,8,0"/>
+
+            <Button Grid.Column="2"
+                   Content="预览备份"
+                   Command="{Binding PreviewBackupCommand}"
+                   IsEnabled="{Binding !IsLoading}"
+                   Margin="0,0,8,0"/>
+
+            <Button Grid.Column="3"
+                   Content="创建备份"
+                   Command="{Binding CreateBackupCommand}"
+                   IsEnabled="{Binding !IsLoading}"
+                   Margin="0,0,8,0"/>
+
+            <Button Grid.Column="4"
+                   Content="恢复备份"
+                   Command="{Binding RestoreBackupCommand}"
+                   IsEnabled="{Binding !IsLoading}"
+                   Classes="accent"
+                   Margin="0,0,8,0"/>
+
+            <Button Grid.Column="5"
+                   Content="删除备份"
+                   Command="{Binding DeleteBackupCommand}"
+                   IsEnabled="{Binding !IsLoading}"/>
+        </Grid>
+    </Grid>
+</UserControl>

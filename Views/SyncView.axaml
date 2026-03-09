@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HostsManager.ViewModels"
+             x:Class="HostsManager.Views.SyncView"
+             x:DataType="vm:SyncViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+        <!-- 标题栏 -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="远程同步" 
+                      FontSize="24" 
+                      FontWeight="SemiBold"
+                      Margin="0,0,0,8"/>
+            <TextBlock Text="从远程 URL 下载并同步 Hosts 配置" 
+                      FontSize="12"
+                      Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </StackPanel>
+
+        <!-- 同步模式选择 -->
+        <Border Grid.Row="1"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16"
+                Margin="0,0,0,16">
+            <StackPanel Spacing="12">
+                <TextBlock Text="同步模式" FontWeight="Medium"/>
+                <RadioButton Content="追加模式（保留现有内容，追加远程内容）"
+                            IsChecked="{Binding AppendMode}"/>
+                <RadioButton Content="覆盖模式（完全替换为远程内容）"
+                            IsChecked="{Binding !AppendMode}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 同步源列表 -->
+        <Border Grid.Row="2"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12"
+                Margin="0,0,0,16">
+            <ListBox ItemsSource="{Binding SyncSources}"
+                    SelectedItem="{Binding SelectedSource}"
+                    Background="Transparent"
+                    BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Name}" 
+                                      FontWeight="Medium"/>
+                            <TextBlock Text="{Binding Url}" 
+                                      FontSize="11"
+                                      Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                            <TextBlock Text="{Binding Description}" 
+                                      FontSize="11"
+                                      Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                      IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- 添加新源 -->
+        <Border Grid.Row="3"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16"
+                Margin="0,0,0,16">
+            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="100,*,Auto">
+                <TextBlock Grid.Row="0" Grid.Column="0" 
+                          Text="名称：" 
+                          VerticalAlignment="Center"
+                          Margin="0,0,0,8"/>
+                <TextBox Grid.Row="0" Grid.Column="1" 
+                        Text="{Binding NewSourceName}"
+                        Watermark="例如：GitHub Hosts"
+                        Margin="0,0,8,8"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" 
+                          Text="URL：" 
+                          VerticalAlignment="Center"
+                          Margin="0,0,0,8"/>
+                <TextBox Grid.Row="1" Grid.Column="1" 
+                        Text="{Binding NewSourceUrl}"
+                        Watermark="https://example.com/hosts"
+                        Margin="0,0,8,8"/>
+
+                <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2"
+                       Content="添加源"
+                       Command="{Binding AddSourceCommand}"
+                       VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- 底部操作栏 -->
+        <Grid Grid.Row="4" 
+              ColumnDefinitions="*,Auto,Auto"
+              Margin="0,0,0,0">
+            <TextBlock Grid.Column="0" 
+                      Text="{Binding StatusMessage}"
+                      VerticalAlignment="Center"/>
+
+            <Button Grid.Column="1"
+                   Content="删除选中源"
+                   Command="{Binding RemoveSourceCommand}"
+                   IsEnabled="{Binding !IsLoading}"
+                   Margin="0,0,8,0"/>
+
+            <Button Grid.Column="2"
+                   Content="开始同步"
+                   Command="{Binding SyncFromSourceCommand}"
+                   IsEnabled="{Binding !IsLoading}"
+                   Classes="accent"/>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,80 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HostsManager.ViewModels"
+        xmlns:views="using:HostsManager.Views"
+        x:Class="HostsManager.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Hosts 管理器"
+        Width="1000" Height="700"
+        MinWidth="1000" MinHeight="700"
+        MaxWidth="1600" MaxHeight="1000"
+        Icon="/Assets/icon.ico"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Margin" Value="4,2"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="220,*">
+        <!-- 左侧导航 -->
+        <Border Grid.Column="0" 
+                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,0,1,0">
+            <StackPanel Margin="12">
+                <TextBlock Text="Hosts 管理器" 
+                          FontSize="20" 
+                          FontWeight="Bold"
+                          Margin="8,16,8,24"/>
+                
+                <ListBox SelectedIndex="{Binding SelectedIndex}"
+                        Background="Transparent"
+                        BorderThickness="0">
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📝" FontSize="18"/>
+                            <TextBlock Text="编辑 Hosts" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="💾" FontSize="18"/>
+                            <TextBlock Text="备份管理" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="🔄" FontSize="18"/>
+                            <TextBlock Text="远程同步" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                </ListBox>
+            </StackPanel>
+        </Border>
+
+        <!-- 右侧内容区 -->
+        <ContentControl Grid.Column="1" 
+                       Content="{Binding CurrentView}"
+                       Margin="20">
+            <ContentControl.DataTemplates>
+                <DataTemplate DataType="vm:HostsEditorViewModel">
+                    <views:HostsEditorView/>
+                </DataTemplate>
+                <DataTemplate DataType="vm:BackupViewModel">
+                    <views:BackupView/>
+                </DataTemplate>
+                <DataTemplate DataType="vm:SyncViewModel">
+                    <views:SyncView/>
+                </DataTemplate>
+            </ContentControl.DataTemplates>
+        </ContentControl>
+    </Grid>
+</Window>

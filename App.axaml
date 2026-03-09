@@ -1,0 +1,22 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HostsManager.App"
+             RequestedThemeVariant="Default">
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon Icon="/Assets/icon.ico" ToolTipText="Hosts 管理器">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="打开主界面" Click="ShowMainWindow"/>
+                        <NativeMenuItemSeparator />
+                        <NativeMenuItem Header="退出程序" Click="ExitApplication"/>
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
+        </TrayIcons>
+    </TrayIcon.Icons>
+</Application>

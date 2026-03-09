@@ -1,0 +1,83 @@
+name: 构建与发布 (Build and Release)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: '发布版本标签 (例如: v2.0.0)'
+        required: true
+        default: 'v2.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: 编译 Windows 应用
+    runs-on: windows-latest
+
+    steps:
+    - name: 检出代码 (Checkout)
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 配置 .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: 还原依赖 (Restore)
+      run: dotnet restore HostsManager.csproj
+
+    - name: 编译并发布 (Build & Publish)
+      run: |
+        dotnet publish HostsManager.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o publish
+
+    - name: 打包发布文件 (Zip)
+      working-directory: publish
+      run: |
+        Compress-Archive -Path HostsManager.exe -DestinationPath ../HostsManager-win-x64.zip
+
+    - name: 生成提交日志 (Generate Changelog)
+      id: changelog
+      run: |
+        $tag = "${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}"
+        $prevTag = git describe --tags --abbrev=0 "$tag^" 2>$null
+        if ($prevTag) {
+          $commits = git log "$prevTag..$tag" --pretty=format:"- %s (%h)" --no-merges
+        } else {
+          $commits = git log --pretty=format:"- %s (%h)" --no-merges -10
+        }
+        $changelog = $commits -join "`n"
+        if ([string]::IsNullOrWhiteSpace($changelog)) {
+          $changelog = "- 初始版本发布"
+        }
+        $changelog | Out-File -FilePath changelog.txt -Encoding utf8
+        echo "CHANGELOG<<EOF" >> $env:GITHUB_OUTPUT
+        echo $changelog >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
+
+    - name: 创建 GitHub Release
+      if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v2
+      with:
+        files: HostsManager-win-x64.zip
+        body: |
+          ## 📦 Hosts 管理器 - Windows x64 单文件版
+          
+          ### ✨ 更新内容
+          
+          ${{ steps.changelog.outputs.CHANGELOG }}
+          
+          ---
+          
+          ### 系统要求
+          - Windows 10/11 (x64)
+        tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
+        name: Hosts Manager ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
+        draft: false
+        prerelease: false
