@@ -8,16 +8,20 @@ namespace HostsManager.Services;
 
 public class SyncService : IDisposable
 {
-    private readonly HttpClient _httpClient;
+    private static readonly HttpClient _sharedHttpClient;
     private bool _disposed;
 
-    public SyncService()
+    static SyncService()
     {
-        _httpClient = new HttpClient
+        _sharedHttpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "HostsManager/1.0");
+        _sharedHttpClient.DefaultRequestHeaders.Add("User-Agent", "HostsManager/1.0");
+    }
+
+    public SyncService()
+    {
     }
 
     public async Task<string> DownloadHostsAsync(string url)
@@ -26,7 +30,7 @@ public class SyncService : IDisposable
         
         try
         {
-            var response = await _httpClient.GetAsync(url);
+            var response = await _sharedHttpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
@@ -75,7 +79,9 @@ public class SyncService : IDisposable
     {
         if (_disposed) return;
         
-        _httpClient?.Dispose();
+        // _sharedHttpClient is static and shared, so we don't dispose it here.
+        // It will be cleaned up when the application exits.
+        
         _disposed = true;
         GC.SuppressFinalize(this);
     }

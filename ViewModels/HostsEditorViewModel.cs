@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HostsManager.Helpers;
 using HostsManager.Services;
 using Serilog;
 using System;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -50,7 +50,7 @@ public partial class HostsEditorViewModel : ObservableObject
         try
         {
             var currentFileContent = await _hostsService.ReadHostsAsync();
-            var currentHash = ComputeHash(currentFileContent);
+            var currentHash = HashHelper.ComputeHash(currentFileContent);
             
             if (currentHash != _lastLoadedHash)
             {
@@ -75,7 +75,7 @@ public partial class HostsEditorViewModel : ObservableObject
             
             _isInitialLoad = true;
             HostsContent = content;
-            _lastLoadedHash = ComputeHash(content);
+            _lastLoadedHash = HashHelper.ComputeHash(content);
             
             await Task.Delay(50);
             _isInitialLoad = false;
@@ -111,7 +111,7 @@ public partial class HostsEditorViewModel : ObservableObject
             await _backupService.CreateBackupAsync(HostsContent);
             await _hostsService.WriteHostsAsync(HostsContent);
             
-            _lastLoadedHash = ComputeHash(HostsContent);
+            _lastLoadedHash = HashHelper.ComputeHash(HostsContent);
             IsModified = false;
             StatusMessage = "保存成功";
         }
@@ -160,12 +160,5 @@ public partial class HostsEditorViewModel : ObservableObject
         {
             IsModified = true;
         }
-    }
-
-    private static string ComputeHash(string content)
-    {
-        var bytes = Encoding.UTF8.GetBytes(content);
-        var hash = SHA256.HashData(bytes);
-        return Convert.ToHexString(hash);
     }
 }

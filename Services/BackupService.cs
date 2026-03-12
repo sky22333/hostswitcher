@@ -1,10 +1,10 @@
+using HostsManager.Helpers;
 using HostsManager.Models;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,7 +30,7 @@ public class BackupService
     {
         try
         {
-            var contentHash = ComputeHash(content);
+            var contentHash = HashHelper.ComputeHash(content);
             
             if (_lastBackupHash == contentHash && !string.IsNullOrEmpty(_lastBackupPath))
             {
@@ -89,7 +89,7 @@ public class BackupService
 
             var content = await File.ReadAllTextAsync(backupPath, Encoding.UTF8);
             
-            _lastBackupHash = ComputeHash(content);
+            _lastBackupHash = HashHelper.ComputeHash(content);
             _lastBackupPath = backupPath;
             
             return content;
@@ -137,12 +137,5 @@ public class BackupService
                 await DeleteBackupAsync(backup.FilePath);
             }
         }
-    }
-
-    private static string ComputeHash(string content)
-    {
-        var bytes = Encoding.UTF8.GetBytes(content);
-        var hash = SHA256.HashData(bytes);
-        return Convert.ToHexString(hash);
     }
 }
