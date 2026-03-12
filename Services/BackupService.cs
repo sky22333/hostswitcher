@@ -32,9 +32,30 @@ public class BackupService
         {
             var contentHash = HashHelper.ComputeHash(content);
             
-            if (_lastBackupHash == contentHash && !string.IsNullOrEmpty(_lastBackupPath))
+            // 检查最近一次备份
+            if (_lastBackupHash == contentHash && !string.IsNullOrEmpty(_lastBackupPath) && File.Exists(_lastBackupPath))
             {
                 return _lastBackupPath;
+            }
+
+            // 检查所有现有备份
+            var existingBackups = await GetBackupsAsync();
+            if (existingBackups.Count > 0)
+            {
+                // 读取最新的备份文件进行比较
+                var latestBackup = existingBackups.First();
+                if (latestBackup.FileSize == Encoding.UTF8.GetByteCount(content)) // 简单的长度预检查
+                {
+                    var latestContent = await File.ReadAllTextAsync(latestBackup.FilePath, Encoding.UTF8);
+                    var latestHash = HashHelper.ComputeHash(latestContent);
+                    
+                    if (latestHash == contentHash)
+                    {
+                        _lastBackupHash = contentHash;
+                        _lastBackupPath = latestBackup.FilePath;
+                        return latestBackup.FilePath;
+                    }
+                }
             }
 
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
