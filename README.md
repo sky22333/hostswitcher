@@ -52,3 +52,7 @@ dotnet run
 - MVVM 架构（CommunityToolkit.Mvvm）
 - AvaloniaEdit（代码编辑器）
 - Serilog（日志系统）
+
+### 预览
+
+![主界面](/.github/demo/demo.jpg)
