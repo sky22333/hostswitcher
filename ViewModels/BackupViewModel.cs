@@ -95,6 +95,24 @@ public partial class BackupViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task PreviewBackupAsync()
+    {
+        if (SelectedBackup == null)
+            return;
+
+        try
+        {
+            var content = await _backupService.ReadBackupAsync(SelectedBackup.FilePath);
+            await DialogHelper.ShowPreviewAsync($"预览 - {SelectedBackup.DisplayName}", content);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"预览失败: {ex.Message}";
+            Log.Error(ex, "预览备份失败");
+        }
+    }
+
+    [RelayCommand]
     private async Task RestoreBackupAsync()
     {
         if (SelectedBackup == null)
@@ -116,7 +134,7 @@ public partial class BackupViewModel : ObservableObject
             var currentHosts = await _hostsService.ReadHostsAsync();
             await _backupService.CreateBackupAsync(currentHosts);
 
-            var content = await _backupService.RestoreBackupAsync(SelectedBackup.FilePath);
+            var content = await _backupService.PrepareRestoreAsync(SelectedBackup.FilePath);
             await _hostsService.WriteHostsAsync(content);
             await _hostsEditorViewModel.RefreshIfNeededAsync();
 

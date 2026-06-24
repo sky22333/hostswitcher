@@ -13,7 +13,7 @@ namespace HostsManager;
 
 public partial class App : Application
 {
-    public static IServiceProvider Services { get; private set; } = null!;
+    private static IServiceProvider _services = null!;
     private static IClassicDesktopStyleApplicationLifetime? _desktop;
 
     public override void Initialize()
@@ -30,7 +30,7 @@ public partial class App : Application
 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = Services.GetRequiredService<MainWindowViewModel>()
+                DataContext = _services.GetRequiredService<MainWindowViewModel>()
             };
 
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -68,7 +68,7 @@ public partial class App : Application
         services.AddSingleton<BackupViewModel>();
         services.AddSingleton<SyncViewModel>();
 
-        Services = services.BuildServiceProvider();
+        _services = services.BuildServiceProvider();
     }
 
     private void ShowMainWindow(object? sender, EventArgs e) => ActivateMainWindow();

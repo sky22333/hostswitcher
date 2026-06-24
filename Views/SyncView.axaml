@@ -32,20 +32,12 @@
         </Border>
 
         <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-            <StackPanel Grid.Column="0"
-                       Orientation="Horizontal"
-                       Spacing="8"
-                       VerticalAlignment="Center">
-                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"/>
-                <ProgressBar IsIndeterminate="True"
-                            IsVisible="{Binding IsLoading}"
-                            Width="80"
-                            Height="4"
-                            VerticalAlignment="Center"/>
-            </StackPanel>
+            <TextBlock Grid.Column="0"
+                      Text="{Binding StatusMessage}"
+                      VerticalAlignment="Center"/>
 
             <Button Grid.Column="1"
-                   Classes="icon accent"
+                   Classes="icon"
                    Command="{Binding SyncFromSourceCommand}"
                    IsEnabled="{Binding !IsLoading}">
                 <StackPanel Orientation="Horizontal" Spacing="8">

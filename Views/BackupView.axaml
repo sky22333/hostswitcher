@@ -7,7 +7,7 @@
     <Grid RowDefinitions="Auto,*,Auto">
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
             <TextBlock Text="备份管理" Classes="pageTitle" Margin="0,0,0,6"/>
-            <TextBlock Text="管理 Hosts 文件的备份版本，保存或恢复前会自动创建备份"
+            <TextBlock Text="双击备份项可预览内容，恢复前会自动备份当前 Hosts"
                       Classes="pageSubtitle"/>
         </StackPanel>
 
@@ -23,7 +23,8 @@
                         SelectedItem="{Binding SelectedBackup}"
                         Background="Transparent"
                         BorderThickness="0"
-                        IsVisible="{Binding !IsBackupListEmpty}">
+                        IsVisible="{Binding !IsBackupListEmpty}"
+                        DoubleTapped="OnBackupDoubleTapped">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Spacing="4">
@@ -41,23 +42,16 @@
         <Grid Grid.Row="2"
               ColumnDefinitions="*,Auto,Auto,Auto,Auto"
               Margin="0,16,0,0">
-            <StackPanel Grid.Column="0"
-                       Orientation="Horizontal"
-                       Spacing="8"
-                       VerticalAlignment="Center">
-                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"/>
-                <ProgressBar IsIndeterminate="True"
-                            IsVisible="{Binding IsLoading}"
-                            Width="80"
-                            Height="4"
-                            VerticalAlignment="Center"/>
-            </StackPanel>
+            <TextBlock Grid.Column="0"
+                      Text="{Binding StatusMessage}"
+                      VerticalAlignment="Center"/>
 
             <Button Grid.Column="1"
                    Classes="icon"
                    Command="{Binding LoadBackupsCommand}"
                    IsEnabled="{Binding !IsLoading}"
-                   Margin="0,0,8,0">
+                   Margin="0,0,8,0"
+                   ToolTip.Tip="刷新备份列表">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <PathIcon Data="{StaticResource IconRefresh}" Width="16" Height="16"/>
                     <TextBlock Text="刷新" VerticalAlignment="Center"/>
@@ -65,18 +59,23 @@
             </Button>
 
             <Button Grid.Column="2"
+                   Classes="icon"
                    Command="{Binding CreateBackupCommand}"
                    IsEnabled="{Binding !IsLoading}"
-                   Margin="0,0,8,0"
-                   Content="创建备份"/>
+                   Margin="0,0,8,0">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <PathIcon Data="{StaticResource IconBackup}" Width="16" Height="16"/>
+                    <TextBlock Text="创建备份" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
 
             <Button Grid.Column="3"
-                   Classes="icon accent"
+                   Classes="icon"
                    Command="{Binding RestoreBackupCommand}"
                    IsEnabled="{Binding !IsLoading}"
                    Margin="0,0,8,0">
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <PathIcon Data="{StaticResource IconRefresh}" Width="16" Height="16"/>
+                    <PathIcon Data="{StaticResource IconRestore}" Width="16" Height="16"/>
                     <TextBlock Text="恢复备份" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>

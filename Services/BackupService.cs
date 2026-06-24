@@ -31,25 +31,18 @@ public class BackupService
         try
         {
             var contentHash = HashHelper.ComputeHash(content);
-            
-            // 检查最近一次备份
-            if (_lastBackupHash == contentHash && !string.IsNullOrEmpty(_lastBackupPath) && File.Exists(_lastBackupPath))
-            {
-                return _lastBackupPath;
-            }
 
-            // 检查所有现有备份
-            var existingBackups = await GetBackupsAsync();
+            if (_lastBackupHash == contentHash && !string.IsNullOrEmpty(_lastBackupPath) && File.Exists(_lastBackupPath))
+                return _lastBackupPath;
+
+            var existingBackups = GetBackups();
             if (existingBackups.Count > 0)
             {
-                // 读取最新的备份文件进行比较
-                var latestBackup = existingBackups.First();
-                if (latestBackup.FileSize == Encoding.UTF8.GetByteCount(content)) // 简单的长度预检查
+                var latestBackup = existingBackups[0];
+                if (latestBackup.FileSize == Encoding.UTF8.GetByteCount(content))
                 {
                     var latestContent = await File.ReadAllTextAsync(latestBackup.FilePath, Encoding.UTF8);
-                    var latestHash = HashHelper.ComputeHash(latestContent);
-                    
-                    if (latestHash == contentHash)
+                    if (HashHelper.ComputeHash(latestContent) == contentHash)
                     {
                         _lastBackupHash = contentHash;
                         _lastBackupPath = latestBackup.FilePath;
@@ -59,15 +52,14 @@ public class BackupService
             }
 
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var fileName = $"hosts_backup_{timestamp}.txt";
-            var filePath = Path.Combine(_backupDirectory, fileName);
+            var filePath = Path.Combine(_backupDirectory, $"hosts_backup_{timestamp}.txt");
 
             await File.WriteAllTextAsync(filePath, content, Encoding.UTF8);
-            
+
             _lastBackupHash = contentHash;
             _lastBackupPath = filePath;
-            
-            await CleanupOldBackupsAsync();
+
+            CleanupOldBackups(existingBackups.Count + 1);
 
             return filePath;
         }
@@ -78,12 +70,63 @@ public class BackupService
         }
     }
 
-    public async Task<List<BackupInfo>> GetBackupsAsync()
+    public Task<List<BackupInfo>> GetBackupsAsync()
     {
-        await Task.CompletedTask;
-        
+        return Task.FromResult(GetBackups());
+    }
+
+    public async Task<string> ReadBackupAsync(string backupPath)
+    {
+        try
+        {
+            if (!File.Exists(backupPath))
+                throw new FileNotFoundException("备份文件不存在", backupPath);
+
+            return await File.ReadAllTextAsync(backupPath, Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "读取备份失败");
+            throw;
+        }
+    }
+
+    public async Task<string> PrepareRestoreAsync(string backupPath)
+    {
+        var content = await ReadBackupAsync(backupPath);
+        _lastBackupHash = HashHelper.ComputeHash(content);
+        _lastBackupPath = backupPath;
+        return content;
+    }
+
+    public Task DeleteBackupAsync(string backupPath)
+    {
+        try
+        {
+            if (File.Exists(backupPath))
+            {
+                File.Delete(backupPath);
+
+                if (_lastBackupPath == backupPath)
+                {
+                    _lastBackupHash = null;
+                    _lastBackupPath = null;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "删除备份失败");
+            throw;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private List<BackupInfo> GetBackups()
+    {
         var backups = new List<BackupInfo>();
-        
+
         foreach (var file in Directory.EnumerateFiles(_backupDirectory, "hosts_backup_*.txt"))
         {
             var fileInfo = new FileInfo(file);
@@ -99,64 +142,13 @@ public class BackupService
         return backups.OrderByDescending(b => b.CreatedTime).ToList();
     }
 
-    public async Task<string> RestoreBackupAsync(string backupPath)
+    private void CleanupOldBackups(int totalCount)
     {
-        try
-        {
-            if (!File.Exists(backupPath))
-            {
-                throw new FileNotFoundException("备份文件不存在", backupPath);
-            }
+        if (totalCount <= MaxBackupCount)
+            return;
 
-            var content = await File.ReadAllTextAsync(backupPath, Encoding.UTF8);
-            
-            _lastBackupHash = HashHelper.ComputeHash(content);
-            _lastBackupPath = backupPath;
-            
-            return content;
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "恢复备份失败");
-            throw;
-        }
-    }
-
-    public async Task DeleteBackupAsync(string backupPath)
-    {
-        await Task.CompletedTask;
-        
-        try
-        {
-            if (File.Exists(backupPath))
-            {
-                File.Delete(backupPath);
-                
-                if (_lastBackupPath == backupPath)
-                {
-                    _lastBackupHash = null;
-                    _lastBackupPath = null;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "删除备份失败");
-            throw;
-        }
-    }
-
-    private async Task CleanupOldBackupsAsync()
-    {
-        var backups = await GetBackupsAsync();
-        
-        if (backups.Count > MaxBackupCount)
-        {
-            var toDelete = backups.Skip(MaxBackupCount).ToList();
-            foreach (var backup in toDelete)
-            {
-                await DeleteBackupAsync(backup.FilePath);
-            }
-        }
+        var backups = GetBackups();
+        foreach (var backup in backups.Skip(MaxBackupCount))
+            File.Delete(backup.FilePath);
     }
 }

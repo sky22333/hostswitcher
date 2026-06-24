@@ -173,45 +173,5 @@ class Program
                 retainedFileCountLimit: 7,
                 fileSizeLimitBytes: 10_485_760)
             .CreateLogger();
-        
-        // 异步清理旧日志文件
-        _ = Task.Run(() => CleanupOldLogsAsync());
-    }
-
-    private static async Task CleanupOldLogsAsync()
-    {
-        try
-        {
-            var logsDirectory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "HostsManager", "logs");
-
-            if (!Directory.Exists(logsDirectory))
-                return;
-
-            var cutoffDate = DateTime.Now.AddDays(-3);
-            var deletedCount = 0;
-
-            foreach (var file in Directory.EnumerateFiles(logsDirectory, "app-*.log"))
-            {
-                try
-                {
-                    var fileInfo = new FileInfo(file);
-                    if (fileInfo.LastWriteTime < cutoffDate)
-                    {
-                        await Task.Run(() => File.Delete(file));
-                        deletedCount++;
-                    }
-                }
-                catch
-                {
-                    // 忽略单个文件删除失败
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "清理旧日志失败");
-        }
     }
 }
