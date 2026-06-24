@@ -54,4 +54,4 @@ dotnet run
 
 ### 预览
 
-![主界面](/.github/demo/demo.jpg)
+![主界面](/.github/demo/demo.png)
