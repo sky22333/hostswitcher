@@ -17,7 +17,6 @@
         <Style Selector="Window">
             <Setter Property="TransparencyLevelHint" Value="Mica"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="FontFamily" Value="Segoe UI Variable,Segoe UI"/>
         </Style>
 
         <Style Selector="UserControl">
@@ -28,14 +27,14 @@
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
         <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -103,7 +102,6 @@
 
         <Style Selector="TextBlock.pageTitle">
             <Setter Property="FontSize" Value="24"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
         <Style Selector="TextBlock.pageSubtitle">
@@ -119,7 +117,7 @@
             <Setter Property="AcceptsReturn" Value="True"/>
             <Setter Property="AcceptsTab" Value="True"/>
             <Setter Property="TextWrapping" Value="NoWrap"/>
-            <Setter Property="FontFamily" Value="Consolas,Courier New,monospace"/>
+            <Setter Property="FontFamily" Value="monospace"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>

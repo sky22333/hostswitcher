@@ -17,9 +17,7 @@
                 BorderThickness="0,0,1,0">
             <StackPanel Margin="12,16">
                 <TextBlock Text="功能"
-                          FontSize="12"
-                          FontWeight="SemiBold"
-                          Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                          Classes="pageSubtitle"
                           Margin="12,0,0,12"/>
 
                 <ListBox SelectedIndex="{Binding SelectedIndex}"

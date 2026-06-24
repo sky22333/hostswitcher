@@ -28,7 +28,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding DisplayName}" FontWeight="Medium"/>
+                                <TextBlock Text="{Binding DisplayName}"/>
                                 <TextBlock Text="{Binding FileName}"
                                           FontSize="11"
                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
