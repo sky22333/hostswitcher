@@ -124,6 +124,7 @@ public static class DialogHelper
             window.SizeToContent = SizeToContent.Height;
         }
 
+        WindowChrome.EnsureOpaqueFallback(window);
         return window;
     }
 

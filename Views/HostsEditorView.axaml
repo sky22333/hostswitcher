@@ -17,10 +17,7 @@
                       ToolTip.Tip="点击打开文件所在目录"/>
         </StackPanel>
 
-        <Border Grid.Row="1"
-                Classes="card"
-                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                ClipToBounds="True">
+        <Border Grid.Row="1" Classes="card" ClipToBounds="True">
             <TextBox Classes="editor"
                     Text="{Binding HostsContent}"
                     Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"

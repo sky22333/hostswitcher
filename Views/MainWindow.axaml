@@ -12,7 +12,7 @@
 
     <Grid ColumnDefinitions="200,*">
         <Border Grid.Column="0"
-                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                Background="Transparent"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="0,0,1,0">
             <StackPanel Margin="12,16">
