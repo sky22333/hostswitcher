@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using HostsManager.Services;
 using HostsManager.ViewModels;
 using Serilog;
 using System;
@@ -21,9 +22,7 @@ public partial class HostsEditorView : UserControl
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         if (DataContext is HostsEditorViewModel viewModel)
-        {
             _ = viewModel.InitializeAsync();
-        }
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -36,13 +35,12 @@ public partial class HostsEditorView : UserControl
     {
         try
         {
-            var hostsPath = @"C:\Windows\System32\drivers\etc";
-            if (Directory.Exists(hostsPath))
+            if (Directory.Exists(HostsService.HostsDirectory))
             {
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "explorer.exe",
-                    Arguments = hostsPath,
+                    Arguments = HostsService.HostsDirectory,
                     UseShellExecute = true
                 });
             }

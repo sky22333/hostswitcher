@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 
 namespace HostsManager.ViewModels;
 
@@ -30,7 +29,7 @@ public partial class MainWindowViewModel : ObservableObject
     async partial void OnSelectedIndexChanged(int value)
     {
         var previousView = CurrentView;
-        
+
         CurrentView = value switch
         {
             0 => _hostsEditorViewModel,
@@ -40,17 +39,9 @@ public partial class MainWindowViewModel : ObservableObject
         };
 
         if (CurrentView == _hostsEditorViewModel && previousView != _hostsEditorViewModel)
-        {
             await _hostsEditorViewModel.RefreshIfNeededAsync();
-        }
+
+        if (CurrentView == _backupViewModel && previousView != _backupViewModel)
+            await _backupViewModel.LoadBackupsCommand.ExecuteAsync(null);
     }
-
-    [RelayCommand]
-    private void NavigateToEditor() => SelectedIndex = 0;
-
-    [RelayCommand]
-    private void NavigateToBackup() => SelectedIndex = 1;
-
-    [RelayCommand]
-    private void NavigateToSync() => SelectedIndex = 2;
 }

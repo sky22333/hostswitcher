@@ -10,9 +10,9 @@ public class DnsService
     [DllImport("dnsapi.dll", EntryPoint = "DnsFlushResolverCache")]
     private static extern bool DnsFlushResolverCache();
 
-    public async Task<bool> FlushDnsCacheAsync()
+    public Task<bool> FlushDnsCacheAsync()
     {
-        return await Task.Run(() =>
+        return Task.Run(() =>
         {
             try
             {
@@ -24,17 +24,5 @@ public class DnsService
                 return false;
             }
         });
-    }
-
-    public bool IsDnsServiceAvailable()
-    {
-        try
-        {
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-        }
-        catch
-        {
-            return false;
-        }
     }
 }

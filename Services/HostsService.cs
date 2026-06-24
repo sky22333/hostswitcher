@@ -9,7 +9,9 @@ namespace HostsManager.Services;
 
 public class HostsService
 {
-    private const string HostsPath = @"C:\Windows\System32\drivers\etc\hosts";
+    public const string HostsFilePath = @"C:\Windows\System32\drivers\etc\hosts";
+    public static readonly string HostsDirectory = Path.GetDirectoryName(HostsFilePath)!;
+
     private readonly SemaphoreSlim _fileLock = new(1, 1);
 
     public async Task<string> ReadHostsAsync()
@@ -17,12 +19,12 @@ public class HostsService
         await _fileLock.WaitAsync();
         try
         {
-            if (!File.Exists(HostsPath))
+            if (!File.Exists(HostsFilePath))
             {
-                await File.WriteAllTextAsync(HostsPath, "# Hosts file\r\n", Encoding.UTF8);
+                await File.WriteAllTextAsync(HostsFilePath, "# Hosts file\r\n", Encoding.UTF8);
             }
 
-            return await File.ReadAllTextAsync(HostsPath, Encoding.UTF8);
+            return await File.ReadAllTextAsync(HostsFilePath, Encoding.UTF8);
         }
         catch (Exception ex)
         {
@@ -37,10 +39,13 @@ public class HostsService
 
     public async Task WriteHostsAsync(string content)
     {
+        if (content.Length > 10 * 1024 * 1024)
+            throw new InvalidOperationException("Hosts 文件内容过大");
+
         await _fileLock.WaitAsync();
         try
         {
-            await File.WriteAllTextAsync(HostsPath, content, Encoding.UTF8);
+            await File.WriteAllTextAsync(HostsFilePath, content, Encoding.UTF8);
         }
         catch (Exception ex)
         {
@@ -51,20 +56,5 @@ public class HostsService
         {
             _fileLock.Release();
         }
-    }
-
-    public async Task<bool> ValidateHostsContentAsync(string content)
-    {
-        await Task.CompletedTask;
-        
-        if (string.IsNullOrWhiteSpace(content))
-            return true;
-
-        if (content.Length > 10 * 1024 * 1024)
-        {
-            return false;
-        }
-
-        return true;
     }
 }

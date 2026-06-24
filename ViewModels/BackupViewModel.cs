@@ -1,11 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HostsManager.Helpers;
 using HostsManager.Models;
 using HostsManager.Services;
 using Serilog;
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace HostsManager.ViewModels;
@@ -14,6 +14,7 @@ public partial class BackupViewModel : ObservableObject
 {
     private readonly BackupService _backupService;
     private readonly HostsService _hostsService;
+    private readonly HostsEditorViewModel _hostsEditorViewModel;
 
     [ObservableProperty]
     private ObservableCollection<BackupInfo> _backups = new();
@@ -25,12 +26,19 @@ public partial class BackupViewModel : ObservableObject
     private bool _isLoading;
 
     [ObservableProperty]
+    private bool _isBackupListEmpty = true;
+
+    [ObservableProperty]
     private string _statusMessage = "就绪";
 
-    public BackupViewModel(BackupService backupService, HostsService hostsService)
+    public BackupViewModel(
+        BackupService backupService,
+        HostsService hostsService,
+        HostsEditorViewModel hostsEditorViewModel)
     {
         _backupService = backupService;
         _hostsService = hostsService;
+        _hostsEditorViewModel = hostsEditorViewModel;
         _ = LoadBackupsAsync();
     }
 
@@ -45,11 +53,10 @@ public partial class BackupViewModel : ObservableObject
             var backups = await _backupService.GetBackupsAsync();
             Backups.Clear();
             foreach (var backup in backups)
-            {
                 Backups.Add(backup);
-            }
 
-            StatusMessage = $"找到 {Backups.Count} 个备份";
+            IsBackupListEmpty = Backups.Count == 0;
+            StatusMessage = Backups.Count > 0 ? $"共 {Backups.Count} 个备份" : "暂无备份";
         }
         catch (Exception ex)
         {
@@ -96,6 +103,11 @@ public partial class BackupViewModel : ObservableObject
             return;
         }
 
+        if (!await DialogHelper.ConfirmAsync(
+                "确认恢复",
+                $"将使用 {SelectedBackup.DisplayName} 覆盖当前 Hosts 文件。\n恢复前会自动备份当前内容。"))
+            return;
+
         try
         {
             IsLoading = true;
@@ -106,8 +118,9 @@ public partial class BackupViewModel : ObservableObject
 
             var content = await _backupService.RestoreBackupAsync(SelectedBackup.FilePath);
             await _hostsService.WriteHostsAsync(content);
+            await _hostsEditorViewModel.RefreshIfNeededAsync();
 
-            StatusMessage = "恢复成功";
+            StatusMessage = "恢复成功，可在编辑器中查看";
         }
         catch (Exception ex)
         {
@@ -128,6 +141,11 @@ public partial class BackupViewModel : ObservableObject
             StatusMessage = "请选择要删除的备份";
             return;
         }
+
+        if (!await DialogHelper.ConfirmAsync(
+                "确认删除",
+                $"确定删除备份 {SelectedBackup.DisplayName} 吗？此操作不可撤销。"))
+            return;
 
         try
         {
@@ -150,29 +168,4 @@ public partial class BackupViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void PreviewBackup()
-    {
-        if (SelectedBackup == null)
-        {
-            StatusMessage = "请选择要预览的备份";
-            return;
-        }
-
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = SelectedBackup.FilePath,
-                UseShellExecute = true
-            });
-            
-            StatusMessage = "已打开预览";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"预览失败: {ex.Message}";
-            Log.Error(ex, "预览备份失败");
-        }
-    }
 }

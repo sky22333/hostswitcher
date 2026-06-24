@@ -6,39 +6,29 @@ using System.Threading.Tasks;
 
 namespace HostsManager.Services;
 
-public class SyncService : IDisposable
+public class SyncService
 {
-    private static readonly HttpClient _sharedHttpClient;
-    private bool _disposed;
+    private static readonly HttpClient HttpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(30)
+    };
 
     static SyncService()
     {
-        _sharedHttpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-        _sharedHttpClient.DefaultRequestHeaders.Add("User-Agent", "HostsManager/1.0");
-    }
-
-    public SyncService()
-    {
+        HttpClient.DefaultRequestHeaders.Add("User-Agent", "HostsManager/1.0");
     }
 
     public async Task<string> DownloadHostsAsync(string url)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        
         try
         {
-            var response = await _sharedHttpClient.GetAsync(url);
+            var response = await HttpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            
+
             if (content.Length > 5 * 1024 * 1024)
-            {
                 throw new InvalidOperationException("远程 Hosts 文件过大");
-            }
 
             return content;
         }
@@ -51,38 +41,21 @@ public class SyncService : IDisposable
 
     public string MergeHosts(string currentHosts, string remoteHosts, bool appendMode)
     {
-        if (appendMode)
-        {
-            const string marker = "# === 远程同步内容 ===";
-            var markerIndex = currentHosts.IndexOf(marker, StringComparison.Ordinal);
-            
-            if (markerIndex >= 0)
-            {
-                currentHosts = currentHosts.Substring(0, markerIndex).TrimEnd();
-            }
-            
-            var sb = new StringBuilder(currentHosts.Length + remoteHosts.Length + 50);
-            sb.Append(currentHosts);
-            sb.Append("\r\n\r\n");
-            sb.Append(marker);
-            sb.Append("\r\n");
-            sb.Append(remoteHosts);
-            return sb.ToString();
-        }
-        else
-        {
+        if (!appendMode)
             return remoteHosts;
-        }
-    }
 
-    public void Dispose()
-    {
-        if (_disposed) return;
-        
-        // _sharedHttpClient is static and shared, so we don't dispose it here.
-        // It will be cleaned up when the application exits.
-        
-        _disposed = true;
-        GC.SuppressFinalize(this);
+        const string marker = "# === 远程同步内容 ===";
+        var markerIndex = currentHosts.IndexOf(marker, StringComparison.Ordinal);
+
+        if (markerIndex >= 0)
+            currentHosts = currentHosts[..markerIndex].TrimEnd();
+
+        var sb = new StringBuilder(currentHosts.Length + remoteHosts.Length + 50);
+        sb.Append(currentHosts);
+        sb.Append("\r\n\r\n");
+        sb.Append(marker);
+        sb.Append("\r\n");
+        sb.Append(remoteHosts);
+        return sb.ToString();
     }
 }

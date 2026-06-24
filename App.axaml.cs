@@ -27,7 +27,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             _desktop = desktop;
-            
+
             desktop.MainWindow = new MainWindow
             {
                 DataContext = Services.GetRequiredService<MainWindowViewModel>()
@@ -60,27 +60,22 @@ public partial class App : Application
 
         services.AddSingleton<HostsService>();
         services.AddSingleton<BackupService>();
-        services.AddTransient<SyncService>();
+        services.AddSingleton<SyncService>();
         services.AddSingleton<DnsService>();
-        
+
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<HostsEditorViewModel>();
         services.AddSingleton<BackupViewModel>();
-        services.AddTransient<SyncViewModel>();
+        services.AddSingleton<SyncViewModel>();
 
         Services = services.BuildServiceProvider();
     }
 
-    private void ShowMainWindow(object? sender, EventArgs e)
-    {
-        ActivateMainWindow();
-    }
+    private void ShowMainWindow(object? sender, EventArgs e) => ActivateMainWindow();
 
     private void ExitApplication(object? sender, EventArgs e)
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             desktop.Shutdown();
-        }
     }
 }
