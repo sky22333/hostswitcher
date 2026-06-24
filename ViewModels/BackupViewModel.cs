@@ -39,7 +39,6 @@ public partial class BackupViewModel : ObservableObject
         _backupService = backupService;
         _hostsService = hostsService;
         _hostsEditorViewModel = hostsEditorViewModel;
-        _ = LoadBackupsAsync();
     }
 
     [RelayCommand]
