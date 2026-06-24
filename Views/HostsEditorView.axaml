@@ -22,7 +22,7 @@
                     Text="{Binding HostsContent}"
                     Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
                     SelectionBrush="{DynamicResource SystemAccentColor}"
-                    SelectionForegroundBrush="White"
+                    SelectionForegroundBrush="{DynamicResource SystemControlHighlightAltChromeWhiteBrush}"
                     CaretBrush="{DynamicResource SystemControlForegroundBaseHighBrush}"
                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"/>
@@ -37,7 +37,7 @@
                        VerticalAlignment="Center">
                 <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"/>
                 <TextBlock Text="●"
-                          Foreground="Orange"
+                          Classes="warning"
                           IsVisible="{Binding IsModified}"
                           VerticalAlignment="Center"/>
                 <TextBlock Text="已修改"

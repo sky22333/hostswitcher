@@ -6,6 +6,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://HostsManager/Assets/Icons.axaml"/>
+                <ResourceInclude Source="avares://HostsManager/Assets/Theme.axaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
@@ -19,11 +20,30 @@
             <Setter Property="FontFamily" Value="Segoe UI Variable,Segoe UI"/>
         </Style>
 
+        <Style Selector="UserControl">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
         <Style Selector="Button">
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AppSurface1Brush}"/>
+        </Style>
+
+        <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AppSurface2Brush}"/>
         </Style>
 
         <Style Selector="Button.dialog">
@@ -38,21 +58,47 @@
             <Setter Property="Padding" Value="10,8"/>
         </Style>
 
+        <Style Selector="TextBox:not(.editor)">
+            <Setter Property="Background" Value="{DynamicResource AppSurface2Brush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+        </Style>
+
+        <Style Selector="TextBox:not(.editor) /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource AppSurface2Brush}"/>
+        </Style>
+
+        <Style Selector="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="RadioButton /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AppSurface1Brush}"/>
         </Style>
 
         <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurface2Brush}"/>
         </Style>
 
         <Style Selector="Border.card">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurface1Brush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <Style Selector="Border.dialogRoot">
+            <Setter Property="Background" Value="Transparent"/>
         </Style>
 
         <Style Selector="TextBlock.pageTitle">
@@ -65,6 +111,10 @@
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
         </Style>
 
+        <Style Selector="TextBlock.warning">
+            <Setter Property="Foreground" Value="{DynamicResource AppWarningBrush}"/>
+        </Style>
+
         <Style Selector="TextBox.editor">
             <Setter Property="AcceptsReturn" Value="True"/>
             <Setter Property="AcceptsTab" Value="True"/>
@@ -74,6 +124,15 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="16,12"/>
+        </Style>
+
+        <Style Selector="TextBox.editor /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="TextBox.editor /template/ ScrollViewer">
+            <Setter Property="Background" Value="Transparent"/>
         </Style>
 
         <Style Selector="TextBox.editor:focus /template/ Border#PART_BorderElement">

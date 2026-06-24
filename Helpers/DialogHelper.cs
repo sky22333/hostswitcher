@@ -33,6 +33,7 @@ public static class DialogHelper
 
         dialog.Content = new Border
         {
+            Classes = { "dialogRoot" },
             Padding = new Thickness(24),
             Child = new StackPanel
             {
@@ -82,7 +83,8 @@ public static class DialogHelper
         {
             RowDefinitions = new RowDefinitions("*,Auto"),
             Margin = new Thickness(16),
-            RowSpacing = 12
+            RowSpacing = 12,
+            Background = Brushes.Transparent
         };
 
         var card = new Border { Classes = { "card" }, Child = editor };
